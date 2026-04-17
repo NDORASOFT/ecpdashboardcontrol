@@ -15,16 +15,23 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const v = vehicleFor(pct);
   const Icon = v.icon;
 
-  // Compact SVG ring
-  const size = 86;
-  const stroke = 9;
+  // SVG ring
+  const size = 120;
+  const stroke = 12;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
 
   return (
-    <Card className="surface-card p-3 flex flex-row items-center gap-3 h-full overflow-hidden">
-      <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <Card className="surface-card p-3 flex flex-col items-center gap-2 h-full overflow-hidden">
+      {/* Title */}
+      <div className="w-full text-center">
+        <p className="font-display text-xs font-semibold leading-tight">Daily Goal</p>
+        <p className="text-[9px] text-muted-foreground">Meta: {goal} órdenes</p>
+      </div>
+
+      {/* Ring */}
+      <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--secondary))" strokeWidth={stroke} fill="none" />
           <circle
@@ -40,23 +47,24 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
           />
         </svg>
         <div className="absolute inset-0 grid place-items-center">
-          {showRemaining ? (
-            <div className="text-center leading-none">
-              <div className="font-display text-lg font-bold">{count}</div>
-              <div className="text-[8px] text-muted-foreground">de {goal}</div>
-            </div>
-          ) : (
-            <div className="text-2xl animate-float leading-none">{mood.face}</div>
-          )}
+          <div className="text-center leading-none">
+            {showRemaining ? (
+              <>
+                <div className="font-display text-2xl font-bold">{count}</div>
+                <div className="text-[9px] text-muted-foreground mt-0.5">de {goal}</div>
+              </>
+            ) : (
+              <>
+                <div className="text-3xl animate-float">{mood.face}</div>
+                <div className="text-[9px] text-muted-foreground mt-1">{mood.label}</div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <p className="font-display text-xs font-semibold truncate">Daily Goal</p>
-          <span className="text-[9px] text-muted-foreground shrink-0">{count}/{goal}</span>
-        </div>
-
+      {/* Shipping bar + remaining */}
+      <div className="w-full px-1 mt-auto">
         <div className="flex items-center gap-2">
           <div
             className="h-5 w-5 rounded-md grid place-items-center shrink-0 animate-float"
@@ -71,9 +79,8 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
             {Math.round(pct * 100)}%
           </span>
         </div>
-
-        <div className="text-[9px] text-muted-foreground truncate">
-          {v.label} · {remaining > 0 ? `faltan ${remaining}` : "¡Meta alcanzada!"}
+        <div className="text-[10px] text-center mt-1.5 font-medium" style={{ color: v.color }}>
+          {remaining > 0 ? `Faltan ${remaining} órdenes` : "¡Meta alcanzada! 🎉"}
         </div>
       </div>
     </Card>

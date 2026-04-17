@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Calculator } from "@/components/dashboard/Calculator";
 import { Notepad } from "@/components/dashboard/Notepad";
 import { TodoList } from "@/components/dashboard/TodoList";
-import { QuoteBucket, type Quote } from "@/components/dashboard/QuoteBucket";
+import { type Quote } from "@/components/dashboard/QuoteBucket";
 import { FormViewer } from "@/components/dashboard/FormViewer";
 import { OrderCounter } from "@/components/dashboard/OrderCounter";
 import { GoalGauge } from "@/components/dashboard/GoalGauge";
@@ -61,7 +61,7 @@ const Index = () => {
         </div>
         <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px] flex flex-col gap-4">
           <div className="flex-1 min-h-0">
-            <TodoList />
+            <TodoList quotes={quotes} setQuotes={setQuotes} />
           </div>
           <div className="shrink-0">
             <OrderCounter
@@ -75,7 +75,7 @@ const Index = () => {
           <FormViewer />
         </div>
         <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px] flex flex-col gap-4">
-          <div className="shrink-0 h-[230px]">
+          <div className="shrink-0">
             <GoalGauge count={count} goal={GOAL} />
           </div>
           <div className="flex-1 min-h-0">
@@ -86,11 +86,6 @@ const Index = () => {
         {/* Row 2 */}
         <div className="col-span-12 md:col-span-3 min-h-[340px]">
           <Notepad />
-        </div>
-
-        {/* Row 3 */}
-        <div className="col-span-12 md:col-span-9 min-h-[280px]">
-          <QuoteBucket quotes={quotes} setQuotes={setQuotes} />
         </div>
       </main>
 
