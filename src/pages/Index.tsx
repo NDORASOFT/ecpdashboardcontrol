@@ -74,8 +74,13 @@ const Index = () => {
         <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px]">
           <FormViewer />
         </div>
-        <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px]">
-          <GoalGauge count={count} goal={GOAL} />
+        <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px] flex flex-col gap-4">
+          <div className="shrink-0 h-[230px]">
+            <GoalGauge count={count} goal={GOAL} />
+          </div>
+          <div className="flex-1 min-h-0">
+            <HistoryTable todayCount={count} goal={GOAL} />
+          </div>
         </div>
 
         {/* Row 2 */}
@@ -84,11 +89,8 @@ const Index = () => {
         </div>
 
         {/* Row 3 */}
-        <div className="col-span-12 md:col-span-3 min-h-[280px]">
-          <QuoteBucket quotes={quotes} setQuotes={setQuotes} />
-        </div>
         <div className="col-span-12 md:col-span-9 min-h-[280px]">
-          <HistoryTable todayCount={count} goal={GOAL} />
+          <QuoteBucket quotes={quotes} setQuotes={setQuotes} />
         </div>
       </main>
 
