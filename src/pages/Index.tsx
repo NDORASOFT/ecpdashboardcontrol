@@ -59,10 +59,10 @@ const Index = () => {
         <div className="col-span-12 md:col-span-3 min-h-[340px]">
           <Calculator />
         </div>
-        <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px] flex flex-col gap-4">
-          <div className="flex-1 min-h-0">
-            <TodoList quotes={quotes} setQuotes={setQuotes} />
-          </div>
+        <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px]">
+          <TodoList quotes={quotes} setQuotes={setQuotes} />
+        </div>
+        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px] flex flex-col gap-4">
           <div className="shrink-0">
             <OrderCounter
               count={count}
@@ -70,9 +70,9 @@ const Index = () => {
               onReset={() => setCount(0)}
             />
           </div>
-        </div>
-        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px]">
-          <FormViewer />
+          <div className="flex-1 min-h-0">
+            <FormViewer />
+          </div>
         </div>
         <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px] flex flex-col gap-4">
           <div className="shrink-0">
