@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -9,6 +9,7 @@ export const FormViewer = () => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
+  const [editing, setEditing] = useState(false);
 
   const toEmbed = (u: string) => {
     if (!u) return "";
