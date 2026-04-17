@@ -15,25 +15,18 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const v = vehicleFor(pct);
   const Icon = v.icon;
 
-  // SVG ring
-  const size = 150;
-  const stroke = 13;
+  // Compact SVG ring
+  const size = 86;
+  const stroke = 9;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
 
   return (
-    <Card className="surface-card p-4 flex flex-col items-center justify-center h-full text-center">
-      <div className="relative" style={{ width: size, height: size }}>
+    <Card className="surface-card p-3 flex flex-row items-center gap-3 h-full overflow-hidden">
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke="hsl(var(--secondary))"
-            strokeWidth={stroke}
-            fill="none"
-          />
+          <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--secondary))" strokeWidth={stroke} fill="none" />
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -47,36 +40,29 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
           />
         </svg>
         <div className="absolute inset-0 grid place-items-center">
-          <div>
-            {showRemaining ? (
-              <>
-                <div className="font-display text-3xl font-bold leading-none">{count}</div>
-                <div className="text-[10px] text-muted-foreground mt-1">de {goal}</div>
-                <div className="text-[10px] text-coral font-semibold mt-1">faltan {remaining}</div>
-              </>
-            ) : (
-              <>
-                <div className="text-4xl leading-none animate-float">{mood.face}</div>
-                <div className="text-[10px] text-muted-foreground mt-1">{mood.label}</div>
-              </>
-            )}
-          </div>
+          {showRemaining ? (
+            <div className="text-center leading-none">
+              <div className="font-display text-lg font-bold">{count}</div>
+              <div className="text-[8px] text-muted-foreground">de {goal}</div>
+            </div>
+          ) : (
+            <div className="text-2xl animate-float leading-none">{mood.face}</div>
+          )}
         </div>
       </div>
 
-      <div className="mt-3 w-full px-1">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <p className="font-display text-xs font-semibold">Daily Goal</p>
-          <span className="text-[9px] text-muted-foreground">· {goal} órdenes</span>
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="font-display text-xs font-semibold truncate">Daily Goal</p>
+          <span className="text-[9px] text-muted-foreground shrink-0">{count}/{goal}</span>
         </div>
 
-        {/* Merged single-line shipping status + progress */}
-        <div className="flex items-center gap-2 w-full">
+        <div className="flex items-center gap-2">
           <div
-            className="h-6 w-6 rounded-lg grid place-items-center shrink-0 animate-float"
+            className="h-5 w-5 rounded-md grid place-items-center shrink-0 animate-float"
             style={{ background: `${v.color}22`, color: v.color }}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3 w-3" />
           </div>
           <div className="flex-1 min-w-0">
             <ShippingProgress pct={pct} compact />
@@ -85,8 +71,9 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
             {Math.round(pct * 100)}%
           </span>
         </div>
-        <div className="text-[9px] text-muted-foreground mt-1 truncate">
-          {v.label} · {remaining > 0 ? `${remaining} para meta` : "¡Meta alcanzada!"}
+
+        <div className="text-[9px] text-muted-foreground truncate">
+          {v.label} · {remaining > 0 ? `faltan ${remaining}` : "¡Meta alcanzada!"}
         </div>
       </div>
     </Card>
