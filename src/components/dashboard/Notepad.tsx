@@ -48,6 +48,7 @@ const emptyTNote = (): TNote => ({
 const formatTNote = (t: TNote) => {
   const lines: string[] = [];
   for (const f of BASE_FIELDS) {
+    if (f.key === "mscItem") continue; // referencia, no se copia
     const val = (t[f.key] as string) ?? "";
     lines.push(`${f.label}: ${val}`);
   }
