@@ -79,20 +79,17 @@ const Index = () => {
         </div>
 
         {/* Row 3 */}
-        <div className="col-span-12 md:col-span-3 min-h-[280px]">
+        <div className="col-span-12 md:col-span-4 min-h-[300px]">
           <QuoteBucket quotes={quotes} setQuotes={setQuotes} />
         </div>
-        <div className="col-span-12 md:col-span-3 min-h-[280px]">
-          <Notepad />
-        </div>
-        <div className="col-span-12 md:col-span-3 min-h-[280px]">
+        <div className="col-span-12 md:col-span-4 min-h-[300px]">
           <OrderCounter
             count={count}
             setCount={setCount}
             onReset={() => setCount(0)}
           />
         </div>
-        <div className="col-span-12 md:col-span-3 min-h-[280px]">
+        <div className="col-span-12 md:col-span-4 min-h-[300px]">
           <HistoryTable todayCount={count} goal={GOAL} />
         </div>
       </main>
