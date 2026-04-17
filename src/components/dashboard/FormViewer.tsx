@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -9,6 +9,7 @@ export const FormViewer = () => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
+  const [editing, setEditing] = useState(false);
 
   const toEmbed = (u: string) => {
     if (!u) return "";
@@ -40,21 +41,50 @@ export const FormViewer = () => {
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
         {url && (
-          <a href={url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => { setDraft(url); setEditing((v) => !v); }}
+              aria-label="Editar URL"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={() => { setUrl(""); setDraft(""); setEditing(false); }}
+              aria-label="Eliminar URL"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+            <a href={url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </>
         )}
       </div>
 
-      <div className="flex gap-2 mb-3">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Pega aquí el link del Google Form..."
-          className="h-9 text-xs"
-        />
-        <Button size="sm" className="h-9" onClick={() => setUrl(draft)}>Cargar</Button>
-      </div>
+      {(!url || editing) && (
+        <div className="flex gap-2 mb-3">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Pega aquí el link del Google Form..."
+            className="h-9 text-xs"
+          />
+          <Button size="sm" className="h-9" onClick={() => { setUrl(draft); setEditing(false); setKey((k) => k + 1); }}>
+            {url ? "Actualizar" : "Cargar"}
+          </Button>
+          {editing && (
+            <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditing(false)}>
+              Cancelar
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 rounded-2xl overflow-hidden bg-secondary/50 border border-border/60">
         {url ? (
