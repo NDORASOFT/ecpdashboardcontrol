@@ -37,8 +37,8 @@ export const Notepad = () => {
         <div className="h-8 w-8 rounded-xl bg-sun text-accent-foreground grid place-items-center">
           <NotebookPen className="h-4 w-4" />
         </div>
-        <h3 className="font-display text-sm font-semibold">Notepad</h3>
-        <span className="text-[10px] text-muted-foreground ml-auto">{notes.length} tab{notes.length>1?"s":""}</span>
+        <h3 className="font-display text-xs font-semibold">Notepad</h3>
+        <span className="text-[9px] text-muted-foreground ml-auto">{notes.length} tab{notes.length>1?"s":""}</span>
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin pb-2">

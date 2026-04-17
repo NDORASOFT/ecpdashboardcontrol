@@ -27,8 +27,8 @@ export const FormViewer = () => {
           <ClipboardList className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-display text-sm font-semibold leading-tight">Order Tracker</h3>
-          <p className="text-[10px] text-muted-foreground">Completa tras cada orden</p>
+          <h3 className="font-display text-xs font-semibold leading-tight">Order Tracker</h3>
+          <p className="text-[9px] text-muted-foreground">Completa tras cada orden</p>
         </div>
         <Button
           variant="ghost"

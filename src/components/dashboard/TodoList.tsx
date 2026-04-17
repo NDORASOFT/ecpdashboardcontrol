@@ -117,8 +117,8 @@ export const TodoList = () => {
           <Bell className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-display text-sm font-semibold leading-tight">To-Do del día</h3>
-          <p className="text-[10px] text-muted-foreground">{completedToday} completadas hoy</p>
+          <h3 className="font-display text-xs font-semibold leading-tight">To-Do del día</h3>
+          <p className="text-[9px] text-muted-foreground">{completedToday} completadas hoy</p>
         </div>
         <Button
           variant="ghost"

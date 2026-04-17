@@ -88,10 +88,10 @@ export const Calculator = () => {
             {discountMode ? <Percent className="h-4 w-4" /> : <CalcIcon className="h-4 w-4" />}
           </div>
           <div>
-            <h3 className="font-display text-sm font-semibold leading-tight">
+            <h3 className="font-display text-xs font-semibold leading-tight">
               {discountMode ? "Descuento" : "Calculadora"}
             </h3>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-[9px] text-muted-foreground">
               {discountMode ? "Calcula precio final" : "Operaciones rápidas"}
             </p>
           </div>
