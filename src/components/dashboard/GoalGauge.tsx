@@ -1,9 +1,10 @@
 import { Card } from "@/components/ui/card";
+import { ShippingProgress, vehicleFor } from "./ShippingProgress";
 
 const moodFor = (pct: number) => {
   if (pct >= 1) return { face: "🤩", label: "¡Meta!", color: "hsl(var(--mint))" };
   if (pct >= 0.66) return { face: "😄", label: "Cerca", color: "hsl(var(--sun))" };
-  return { face: "🙂", label: "Avanzando", color: "hsl(var(--coral))" };
+  return { face: "🙂", label: "En ruta", color: "hsl(var(--coral))" };
 };
 
 export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }) => {
@@ -60,9 +61,10 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
           </div>
         </div>
       </div>
-      <div className="mt-3">
+      <div className="mt-3 w-full px-2">
         <p className="font-display text-xs font-semibold">Daily Goal</p>
-        <p className="text-[9px] text-muted-foreground">Meta: {goal} órdenes</p>
+        <p className="text-[9px] text-muted-foreground mb-2">Meta: {goal} órdenes</p>
+        <ShippingProgress pct={pct} />
       </div>
     </Card>
   );
@@ -70,24 +72,30 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
 
 export const MoodChip = ({ count, goal = 70 }: { count: number; goal?: number }) => {
   const pct = Math.min(count / goal, 1);
-  const mood = moodFor(pct);
+  const v = vehicleFor(pct);
+  const Icon = v.icon;
   const remaining = Math.max(goal - count, 0);
 
   return (
-    <Card className="surface-card p-3 flex items-center gap-3 h-full">
-      <div
-        className="h-12 w-12 rounded-2xl grid place-items-center text-2xl shrink-0"
-        style={{ background: `${mood.color}22` }}
-      >
-        {mood.face}
-      </div>
-      <div className="min-w-0">
-        <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Estado</div>
-        <div className="font-display text-xs font-semibold truncate">{mood.label}</div>
-        <div className="text-[9px] text-muted-foreground">
-          {remaining > 0 ? `${remaining} para meta` : "¡Meta alcanzada!"}
+    <Card className="surface-card p-3 flex flex-col gap-2 h-full">
+      <div className="flex items-center gap-3">
+        <div
+          className="h-12 w-12 rounded-2xl grid place-items-center shrink-0 animate-float"
+          style={{ background: `${v.color}22`, color: v.color }}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Shipping</div>
+          <div className="font-display text-xs font-semibold truncate" style={{ color: v.color }}>
+            {v.label}
+          </div>
+          <div className="text-[9px] text-muted-foreground">
+            {remaining > 0 ? `${remaining} para meta` : "¡Meta alcanzada!"}
+          </div>
         </div>
       </div>
+      <ShippingProgress pct={pct} compact />
     </Card>
   );
 };
