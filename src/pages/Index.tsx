@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Calculator } from "@/components/dashboard/Calculator";
 import { Notepad } from "@/components/dashboard/Notepad";
 import { TodoList } from "@/components/dashboard/TodoList";
-import { QuoteBucket, type Quote } from "@/components/dashboard/QuoteBucket";
+import { type Quote } from "@/components/dashboard/QuoteBucket";
 import { FormViewer } from "@/components/dashboard/FormViewer";
 import { OrderCounter } from "@/components/dashboard/OrderCounter";
 import { GoalGauge } from "@/components/dashboard/GoalGauge";
