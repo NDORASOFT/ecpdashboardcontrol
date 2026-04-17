@@ -12,10 +12,12 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const remaining = Math.max(goal - count, 0);
   const showRemaining = count >= 36 && count < goal;
   const mood = moodFor(pct);
+  const v = vehicleFor(pct);
+  const Icon = v.icon;
 
   // SVG ring
-  const size = 160;
-  const stroke = 14;
+  const size = 150;
+  const stroke = 13;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
@@ -61,41 +63,32 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
           </div>
         </div>
       </div>
-      <div className="mt-3 w-full px-2">
-        <p className="font-display text-xs font-semibold">Daily Goal</p>
-        <p className="text-[9px] text-muted-foreground mb-2">Meta: {goal} órdenes</p>
-        <ShippingProgress pct={pct} />
-      </div>
-    </Card>
-  );
-};
 
-export const MoodChip = ({ count, goal = 70 }: { count: number; goal?: number }) => {
-  const pct = Math.min(count / goal, 1);
-  const v = vehicleFor(pct);
-  const Icon = v.icon;
-  const remaining = Math.max(goal - count, 0);
-
-  return (
-    <Card className="surface-card p-3 flex flex-col gap-2 h-full">
-      <div className="flex items-center gap-3">
-        <div
-          className="h-12 w-12 rounded-2xl grid place-items-center shrink-0 animate-float"
-          style={{ background: `${v.color}22`, color: v.color }}
-        >
-          <Icon className="h-6 w-6" />
+      <div className="mt-3 w-full px-1">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <p className="font-display text-xs font-semibold">Daily Goal</p>
+          <span className="text-[9px] text-muted-foreground">· {goal} órdenes</span>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Shipping</div>
-          <div className="font-display text-xs font-semibold truncate" style={{ color: v.color }}>
-            {v.label}
+
+        {/* Merged single-line shipping status + progress */}
+        <div className="flex items-center gap-2 w-full">
+          <div
+            className="h-6 w-6 rounded-lg grid place-items-center shrink-0 animate-float"
+            style={{ background: `${v.color}22`, color: v.color }}
+          >
+            <Icon className="h-3.5 w-3.5" />
           </div>
-          <div className="text-[9px] text-muted-foreground">
-            {remaining > 0 ? `${remaining} para meta` : "¡Meta alcanzada!"}
+          <div className="flex-1 min-w-0">
+            <ShippingProgress pct={pct} compact />
           </div>
+          <span className="text-[10px] font-semibold tabular-nums shrink-0" style={{ color: v.color }}>
+            {Math.round(pct * 100)}%
+          </span>
+        </div>
+        <div className="text-[9px] text-muted-foreground mt-1 truncate">
+          {v.label} · {remaining > 0 ? `${remaining} para meta` : "¡Meta alcanzada!"}
         </div>
       </div>
-      <ShippingProgress pct={pct} compact />
     </Card>
   );
 };

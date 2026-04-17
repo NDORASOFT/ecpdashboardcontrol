@@ -5,7 +5,7 @@ import { TodoList } from "@/components/dashboard/TodoList";
 import { QuoteBucket, type Quote } from "@/components/dashboard/QuoteBucket";
 import { FormViewer } from "@/components/dashboard/FormViewer";
 import { OrderCounter } from "@/components/dashboard/OrderCounter";
-import { GoalGauge, MoodChip } from "@/components/dashboard/GoalGauge";
+import { GoalGauge } from "@/components/dashboard/GoalGauge";
 import { HistoryTable } from "@/components/dashboard/HistoryTable";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { LayoutDashboard } from "lucide-react";
@@ -74,16 +74,13 @@ const Index = () => {
         <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px]">
           <FormViewer />
         </div>
-        <div className="col-span-6 md:col-span-2 min-h-[340px]">
+        <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px]">
           <GoalGauge count={count} goal={GOAL} />
         </div>
 
         {/* Row 2 */}
         <div className="col-span-12 md:col-span-3 min-h-[340px]">
           <Notepad />
-        </div>
-        <div className="col-span-6 md:col-span-2 min-h-[340px]">
-          <MoodChip count={count} goal={GOAL} />
         </div>
 
         {/* Row 3 */}
