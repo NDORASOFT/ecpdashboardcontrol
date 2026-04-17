@@ -5,7 +5,7 @@ import { TodoList } from "@/components/dashboard/TodoList";
 import { QuoteBucket, type Quote } from "@/components/dashboard/QuoteBucket";
 import { FormViewer } from "@/components/dashboard/FormViewer";
 import { OrderCounter } from "@/components/dashboard/OrderCounter";
-import { GoalGauge, MoodChip } from "@/components/dashboard/GoalGauge";
+import { GoalGauge } from "@/components/dashboard/GoalGauge";
 import { HistoryTable } from "@/components/dashboard/HistoryTable";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { LayoutDashboard } from "lucide-react";
