@@ -28,8 +28,8 @@ export const HistoryTable = ({ todayCount, goal }: { todayCount: number; goal: n
           <TrendingUp className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-display text-sm font-semibold leading-tight">Historial</h3>
-          <p className="text-[10px] text-muted-foreground">Conteos pasados</p>
+          <h3 className="font-display text-xs font-semibold leading-tight">Historial</h3>
+          <p className="text-[9px] text-muted-foreground">Conteos pasados</p>
         </div>
       </div>
 

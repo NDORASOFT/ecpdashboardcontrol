@@ -18,8 +18,8 @@ export const OrderCounter = ({
           <Hash className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-display text-sm font-semibold leading-tight">Órdenes procesadas</h3>
-          <p className="text-[10px] text-muted-foreground">Hoy</p>
+          <h3 className="font-display text-xs font-semibold leading-tight">Órdenes procesadas</h3>
+          <p className="text-[9px] text-muted-foreground">Hoy</p>
         </div>
         <Button
           size="icon"

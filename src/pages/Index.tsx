@@ -18,7 +18,6 @@ const Index = () => {
   const [countDay, setCountDay] = useLocalStorage<string>("ecp.count.day", todayKey());
   const [quotes, setQuotes] = useLocalStorage<Quote[]>("ecp.quotes", []);
 
-  // auto-reset counter at day change
   useEffect(() => {
     const t = todayKey();
     if (countDay !== t) {
@@ -57,39 +56,41 @@ const Index = () => {
 
       <main className="max-w-[1500px] mx-auto grid grid-cols-12 gap-4 auto-rows-[minmax(0,_auto)]">
         {/* Row 1 */}
-        <div className="col-span-12 md:col-span-3 row-span-2 min-h-[460px]">
+        <div className="col-span-12 md:col-span-3 min-h-[340px]">
           <Calculator />
         </div>
-        <div className="col-span-12 md:col-span-3 min-h-[300px]">
-          <TodoList />
+        <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px] flex flex-col gap-4">
+          <div className="flex-1 min-h-0">
+            <TodoList />
+          </div>
+          <div className="shrink-0">
+            <OrderCounter
+              count={count}
+              setCount={setCount}
+              onReset={() => setCount(0)}
+            />
+          </div>
         </div>
-        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[460px]">
+        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px]">
           <FormViewer />
         </div>
-        <div className="col-span-6 md:col-span-2 min-h-[220px]">
+        <div className="col-span-6 md:col-span-2 min-h-[340px]">
           <GoalGauge count={count} goal={GOAL} />
         </div>
 
         {/* Row 2 */}
-        <div className="col-span-12 md:col-span-3 min-h-[260px]">
+        <div className="col-span-12 md:col-span-3 min-h-[340px]">
           <Notepad />
         </div>
-        <div className="col-span-6 md:col-span-2 min-h-[160px]">
+        <div className="col-span-6 md:col-span-2 min-h-[340px]">
           <MoodChip count={count} goal={GOAL} />
         </div>
 
         {/* Row 3 */}
-        <div className="col-span-12 md:col-span-4 min-h-[300px]">
+        <div className="col-span-12 md:col-span-3 min-h-[280px]">
           <QuoteBucket quotes={quotes} setQuotes={setQuotes} />
         </div>
-        <div className="col-span-12 md:col-span-4 min-h-[300px]">
-          <OrderCounter
-            count={count}
-            setCount={setCount}
-            onReset={() => setCount(0)}
-          />
-        </div>
-        <div className="col-span-12 md:col-span-4 min-h-[300px]">
+        <div className="col-span-12 md:col-span-9 min-h-[280px]">
           <HistoryTable todayCount={count} goal={GOAL} />
         </div>
       </main>

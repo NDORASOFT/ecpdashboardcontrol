@@ -42,8 +42,8 @@ export const QuoteBucket = ({
           <Package className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-display text-sm font-semibold leading-tight">Quote Requests</h3>
-          <p className="text-[10px] text-muted-foreground">Pendientes de respuesta</p>
+          <h3 className="font-display text-xs font-semibold leading-tight">Quote Requests</h3>
+          <p className="text-[9px] text-muted-foreground">Pendientes de respuesta</p>
         </div>
         <span className="ml-auto text-xs font-semibold bg-sky/15 text-sky px-2 py-0.5 rounded-full">
           {quotes.length}

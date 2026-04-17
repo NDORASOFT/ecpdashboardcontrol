@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/card";
 const moodFor = (pct: number) => {
   if (pct >= 1) return { face: "🤩", label: "¡Meta!", color: "hsl(var(--mint))" };
   if (pct >= 0.66) return { face: "😄", label: "Cerca", color: "hsl(var(--sun))" };
-  if (pct >= 0.33) return { face: "🙂", label: "Avanzando", color: "hsl(var(--coral))" };
-  return { face: "😐", label: "Empezando", color: "hsl(var(--coral))" };
+  return { face: "🙂", label: "Avanzando", color: "hsl(var(--coral))" };
 };
 
 export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }) => {
@@ -62,8 +61,8 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
         </div>
       </div>
       <div className="mt-3">
-        <p className="font-display text-sm font-semibold">Daily Goal</p>
-        <p className="text-[11px] text-muted-foreground">Meta: {goal} órdenes</p>
+        <p className="font-display text-xs font-semibold">Daily Goal</p>
+        <p className="text-[9px] text-muted-foreground">Meta: {goal} órdenes</p>
       </div>
     </Card>
   );
@@ -83,9 +82,9 @@ export const MoodChip = ({ count, goal = 70 }: { count: number; goal?: number })
         {mood.face}
       </div>
       <div className="min-w-0">
-        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Estado</div>
-        <div className="font-display text-sm font-semibold truncate">{mood.label}</div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Estado</div>
+        <div className="font-display text-xs font-semibold truncate">{mood.label}</div>
+        <div className="text-[9px] text-muted-foreground">
           {remaining > 0 ? `${remaining} para meta` : "¡Meta alcanzada!"}
         </div>
       </div>
