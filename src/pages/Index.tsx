@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Calculator } from "@/components/dashboard/Calculator";
-import { Notepad } from "@/components/dashboard/Notepad";
-import { TodoList } from "@/components/dashboard/TodoList";
-import { type Quote } from "@/components/dashboard/QuoteBucket";
+import { NotesPanel } from "@/components/dashboard/NotesPanel";
+import { SplitOrderCalc } from "@/components/dashboard/SplitOrderCalc";
 import { FormViewer } from "@/components/dashboard/FormViewer";
 import { OrderCounter } from "@/components/dashboard/OrderCounter";
 import { GoalGauge } from "@/components/dashboard/GoalGauge";
@@ -11,7 +10,6 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { LayoutDashboard } from "lucide-react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -29,7 +27,6 @@ const Index = () => {
   const [poCount, setPoCount] = useLocalStorage<number>("ecp.count.po", 0);
   const [otherCount, setOtherCount] = useLocalStorage<number>("ecp.count.other", 0);
   const [countDay, setCountDay] = useLocalStorage<string>("ecp.count.day", todayKey());
-  const [quotes, setQuotes] = useLocalStorage<Quote[]>("ecp.quotes", []);
   const [askType, setAskType] = useState(false);
 
   useEffect(() => {
@@ -45,7 +42,7 @@ const Index = () => {
   useEffect(() => {
     document.title = "ECP Data Entry Dashboard";
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Panel de control diario para ECP Data Entry: tareas, quotes, tracker y meta de órdenes.");
+    if (meta) meta.setAttribute("content", "Panel de control diario para ECP Data Entry: notas, tracker, split orders y meta diaria.");
   }, []);
 
   const handleSubmitDetected = () => setAskType(true);
@@ -91,7 +88,7 @@ const Index = () => {
           <Calculator />
         </div>
         <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px]">
-          <Notepad />
+          <SplitOrderCalc />
         </div>
         <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px] flex flex-col gap-4">
           <div className="shrink-0">
@@ -120,7 +117,7 @@ const Index = () => {
 
         {/* Row 2 */}
         <div className="col-span-12 md:col-span-3 min-h-[340px]">
-          <TodoList quotes={quotes} setQuotes={setQuotes} />
+          <NotesPanel />
         </div>
       </main>
 
