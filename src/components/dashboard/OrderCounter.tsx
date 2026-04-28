@@ -5,10 +5,18 @@ import { Plus, Minus, RotateCcw, Hash } from "lucide-react";
 export const OrderCounter = ({
   count,
   setCount,
+  poCount,
+  setPoCount,
+  otherCount,
+  setOtherCount,
   onReset,
 }: {
   count: number;
   setCount: (n: number) => void;
+  poCount: number;
+  setPoCount: (n: number) => void;
+  otherCount: number;
+  setOtherCount: (n: number) => void;
   onReset: () => void;
 }) => {
   return (
@@ -52,6 +60,50 @@ export const OrderCounter = ({
         >
           <Plus className="h-5 w-5" />
         </Button>
+      </div>
+
+      {/* Breakdown PO / Otros */}
+      <div className="mt-2 grid grid-cols-2 gap-2 text-center">
+        <div className="rounded-lg bg-secondary/60 py-1.5 px-2 flex items-center justify-between">
+          <button
+            onClick={() => setPoCount(Math.max(0, poCount - 1))}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Menos PO"
+          >
+            <Minus className="h-3 w-3" />
+          </button>
+          <div className="leading-none">
+            <div className="text-sm font-semibold tabular-nums">{poCount}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">PO</div>
+          </div>
+          <button
+            onClick={() => setPoCount(poCount + 1)}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Más PO"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        </div>
+        <div className="rounded-lg bg-secondary/60 py-1.5 px-2 flex items-center justify-between">
+          <button
+            onClick={() => setOtherCount(Math.max(0, otherCount - 1))}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Menos Otros"
+          >
+            <Minus className="h-3 w-3" />
+          </button>
+          <div className="leading-none">
+            <div className="text-sm font-semibold tabular-nums">{otherCount}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Otros</div>
+          </div>
+          <button
+            onClick={() => setOtherCount(otherCount + 1)}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Más Otros"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     </Card>
   );
