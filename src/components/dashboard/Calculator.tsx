@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Percent, Calculator as CalcIcon, Delete } from "lucide-react";
+import { Percent, Calculator as CalcIcon, Delete, Copy, Check } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export const Calculator = () => {
   const [discountMode, setDiscountMode] = useState(false);
@@ -11,6 +11,10 @@ export const Calculator = () => {
   const [prev, setPrev] = useState<number | null>(null);
   const [op, setOp] = useState<string | null>(null);
   const [overwrite, setOverwrite] = useState(true);
+  const [lastOp, setLastOp] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // discount mode state
   const [price, setPrice] = useState("");
@@ -51,15 +55,60 @@ export const Calculator = () => {
 
   const equals = () => {
     if (prev === null || !op) return;
-    const res = calc(prev, parseFloat(display), op);
-    setDisplay(String(+res.toFixed(8)));
+    const cur = parseFloat(display);
+    const res = calc(prev, cur, op);
+    const resStr = String(+res.toFixed(8));
+    setLastOp(`${prev} ${op} ${cur} = ${resStr}`);
+    setDisplay(resStr);
     setPrev(null);
     setOp(null);
     setOverwrite(true);
   };
 
-  const clearAll = () => { setDisplay("0"); setPrev(null); setOp(null); setOverwrite(true); };
+  const clearAll = () => {
+    setDisplay("0"); setPrev(null); setOp(null); setOverwrite(true);
+  };
   const back = () => setDisplay(display.length <= 1 ? "0" : display.slice(0, -1));
+
+  const copyDisplay = async () => {
+    try {
+      await navigator.clipboard.writeText(display);
+      setCopied(true);
+      toast({ title: "Copiado", description: display });
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      toast({ title: "Error al copiar", variant: "destructive" });
+    }
+  };
+
+  // Keyboard support — only when calculator card is focused/hovered (not in discount mode)
+  useEffect(() => {
+    if (discountMode) return;
+
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      // Ignore when typing in any input/textarea/contenteditable elsewhere
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      }
+
+      const k = e.key;
+      if (/^[0-9]$/.test(k)) { e.preventDefault(); input(k); return; }
+      if (k === ".") { e.preventDefault(); input("."); return; }
+      if (k === "+") { e.preventDefault(); setOperator("+"); return; }
+      if (k === "-") { e.preventDefault(); setOperator("-"); return; }
+      if (k === "*" || k === "x" || k === "X") { e.preventDefault(); setOperator("×"); return; }
+      if (k === "/") { e.preventDefault(); setOperator("÷"); return; }
+      if (k === "Enter" || k === "=") { e.preventDefault(); equals(); return; }
+      if (k === "Backspace") { e.preventDefault(); back(); return; }
+      if (k === "Escape") { e.preventDefault(); clearAll(); return; }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discountMode, display, prev, op, overwrite]);
 
   const p = parseFloat(price) || 0;
   const d = parseFloat(discount) || 0;
@@ -81,7 +130,7 @@ export const Calculator = () => {
   );
 
   return (
-    <Card className="surface-card p-4 flex flex-col gap-3 h-full">
+    <Card ref={containerRef as any} className="surface-card p-4 flex flex-col gap-3 h-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-xl bg-primary text-primary-foreground grid place-items-center">
@@ -92,7 +141,7 @@ export const Calculator = () => {
               {discountMode ? "Descuento" : "Calculadora"}
             </h3>
             <p className="text-[9px] text-muted-foreground">
-              {discountMode ? "Calcula precio final" : "Operaciones rápidas"}
+              {discountMode ? "Calcula precio final" : "Teclado activo · Enter = ="}
             </p>
           </div>
         </div>
@@ -124,11 +173,26 @@ export const Calculator = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-2 flex-1">
-          <div className="rounded-2xl bg-secondary/70 px-3 py-3 text-right">
-            <div className="text-[10px] text-muted-foreground h-3">
-              {prev !== null ? `${prev} ${op ?? ""}` : ""}
+          <div className="rounded-2xl bg-secondary/70 px-3 py-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0 text-right">
+                <div className="text-[10px] text-muted-foreground h-3">
+                  {prev !== null ? `${prev} ${op ?? ""}` : ""}
+                </div>
+                <div className="font-display text-2xl font-bold tracking-tight truncate">{display}</div>
+              </div>
+              <button
+                onClick={copyDisplay}
+                className="shrink-0 mt-1 h-7 w-7 rounded-lg bg-background/60 hover:bg-background grid place-items-center transition-smooth"
+                aria-label="Copiar resultado"
+                title="Copiar resultado"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+              </button>
             </div>
-            <div className="font-display text-2xl font-bold tracking-tight truncate">{display}</div>
+            <div className="mt-1 pt-1 border-t border-border/40 text-right text-[10px] text-muted-foreground font-mono truncate min-h-[14px]">
+              {lastOp || "—"}
+            </div>
           </div>
           <div className="grid grid-cols-4 gap-1.5">
             <Btn variant="fn" onClick={clearAll}>AC</Btn>
