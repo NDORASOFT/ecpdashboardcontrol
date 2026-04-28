@@ -2,24 +2,65 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-export const FormViewer = () => {
+export const FormViewer = ({
+  onSubmitDetected,
+}: {
+  onSubmitDetected?: () => void;
+}) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
   const [editing, setEditing] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const lastTriggerRef = useRef<number>(0);
 
   const toEmbed = (u: string) => {
     if (!u) return "";
-    // If user pasted a normal Google Form URL, swap viewform for embedded view
     if (u.includes("docs.google.com/forms") && !u.includes("embedded=true")) {
       const sep = u.includes("?") ? "&" : "?";
       return `${u}${sep}embedded=true`;
     }
     return u;
   };
+
+  // Heuristic: when the iframe has focus and then the window regains focus
+  // (user clicked "Submit" inside the form), trigger the count prompt.
+  useEffect(() => {
+    if (!url || !onSubmitDetected) return;
+
+    let iframeWasFocused = false;
+
+    const checkFocus = () => {
+      if (document.activeElement === iframeRef.current) {
+        iframeWasFocused = true;
+      }
+    };
+
+    const onWindowFocus = () => {
+      if (iframeWasFocused) {
+        const now = Date.now();
+        // debounce 2s to avoid double triggers
+        if (now - lastTriggerRef.current > 2000) {
+          lastTriggerRef.current = now;
+          onSubmitDetected();
+        }
+        iframeWasFocused = false;
+      }
+    };
+
+    const interval = setInterval(checkFocus, 300);
+    window.addEventListener("focus", onWindowFocus);
+    window.addEventListener("blur", checkFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onWindowFocus);
+      window.removeEventListener("blur", checkFocus);
+    };
+  }, [url, onSubmitDetected, key]);
 
   return (
     <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
@@ -89,6 +130,7 @@ export const FormViewer = () => {
       <div className="flex-1 rounded-2xl overflow-hidden bg-secondary/50 border border-border/60">
         {url ? (
           <iframe
+            ref={iframeRef}
             key={key}
             src={toEmbed(url)}
             className="w-full h-full"
