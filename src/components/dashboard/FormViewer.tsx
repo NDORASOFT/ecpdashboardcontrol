@@ -18,6 +18,30 @@ export const FormViewer = ({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTriggerRef = useRef<number>(0);
   const focusStartRef = useRef<number>(0);
+  const loadCountRef = useRef<number>(0);
+  const initialLoadAtRef = useRef<number>(0);
+
+  const triggerSubmit = (source: string) => {
+    if (!onSubmitDetected) return;
+    const now = Date.now();
+    if (now - lastTriggerRef.current < 3000) return;
+    lastTriggerRef.current = now;
+    onSubmitDetected();
+  };
+
+  const handleIframeLoad = () => {
+    loadCountRef.current += 1;
+    // First load = initial form render. Subsequent loads on Google Forms
+    // typically mean the user submitted (page navigates to /formResponse "thank you").
+    if (loadCountRef.current === 1) {
+      initialLoadAtRef.current = Date.now();
+      return;
+    }
+    if (!autoDetect) return;
+    // Require at least 4s since first load to avoid counting redirects/preloads.
+    if (Date.now() - initialLoadAtRef.current < 4000) return;
+    triggerSubmit("iframe-load");
+  };
 
   const toEmbed = (u: string) => {
     if (!u) return "";
