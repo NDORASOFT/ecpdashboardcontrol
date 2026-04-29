@@ -78,7 +78,17 @@ export const FormViewer = ({
         <Button
           variant="ghost"
           size="icon"
-          className="ml-auto h-7 w-7"
+          className={`ml-auto h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
+          onClick={() => setAutoDetect(!autoDetect)}
+          aria-label={autoDetect ? "Desactivar auto-detect" : "Activar auto-detect"}
+          title={autoDetect ? "Auto-detect ON (click para apagar)" : "Auto-detect OFF (click para encender)"}
+        >
+          {autoDetect ? <Zap className="h-3.5 w-3.5" /> : <ZapOff className="h-3.5 w-3.5" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
           onClick={() => setKey((k) => k + 1)}
           aria-label="Recargar"
         >
