@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
