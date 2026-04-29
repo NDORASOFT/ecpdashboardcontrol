@@ -172,6 +172,7 @@ export const FormViewer = ({
             ref={iframeRef}
             key={key}
             src={toEmbed(url)}
+            onLoad={handleIframeLoad}
             className="w-full h-full"
             title="Google Form"
             loading="lazy"
