@@ -165,9 +165,28 @@ export const Calculator = () => {
             <div className="flex items-center justify-between text-[11px] opacity-80">
               <span>Ahorras</span><span>${saved.toFixed(2)}</span>
             </div>
-            <div className="mt-1 flex items-end justify-between">
+            <div className="mt-1 flex items-end justify-between gap-2">
               <span className="text-[11px] opacity-80">Total</span>
-              <span className="font-display text-2xl font-bold">${final.toFixed(2)}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-display text-2xl font-bold">${final.toFixed(2)}</span>
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(final.toFixed(2));
+                      setCopied(true);
+                      toast({ title: "Copiado", description: `$${final.toFixed(2)}` });
+                      setTimeout(() => setCopied(false), 1200);
+                    } catch {
+                      toast({ title: "Error al copiar", variant: "destructive" });
+                    }
+                  }}
+                  className="h-7 w-7 rounded-lg bg-primary-foreground/15 hover:bg-primary-foreground/25 grid place-items-center transition-smooth"
+                  aria-label="Copiar total con descuento"
+                  title="Copiar total con descuento"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
