@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Calculator } from "@/components/dashboard/Calculator";
-import { NotesPanel } from "@/components/dashboard/NotesPanel";
+import { Notepad } from "@/components/dashboard/Notepad";
 import { SplitOrderCalc } from "@/components/dashboard/SplitOrderCalc";
 import { FormViewer } from "@/components/dashboard/FormViewer";
 import { OrderCounter } from "@/components/dashboard/OrderCounter";
@@ -88,7 +88,7 @@ const Index = () => {
           <Calculator />
         </div>
         <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px]">
-          <SplitOrderCalc />
+          <Notepad />
         </div>
         <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px] flex flex-col gap-4">
           <div className="shrink-0">
@@ -117,7 +117,7 @@ const Index = () => {
 
         {/* Row 2 */}
         <div className="col-span-12 md:col-span-3 min-h-[340px]">
-          <NotesPanel />
+          <SplitOrderCalc />
         </div>
       </main>
 
