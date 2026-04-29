@@ -11,11 +11,13 @@ export const FormViewer = ({
   onSubmitDetected?: () => void;
 }) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
+  const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", false);
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
   const [editing, setEditing] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTriggerRef = useRef<number>(0);
+  const focusStartRef = useRef<number>(0);
 
   const toEmbed = (u: string) => {
     if (!u) return "";
