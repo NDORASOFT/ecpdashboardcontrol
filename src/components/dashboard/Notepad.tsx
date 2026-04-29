@@ -223,15 +223,15 @@ export const Notepad = () => {
             )}
 
             {tnotes.map((t) => (
-              <div key={t.id} className="bg-secondary/50 rounded-xl p-2.5 space-y-1.5">
-                <div className="flex items-center justify-between gap-2 pb-1 border-b border-border/40">
-                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground font-semibold">
-                    T-Note · {(t.mscItem || "sin item").toString().slice(0, 14)}
+              <div key={t.id} className="bg-black border border-yellow-500/40 rounded-xl p-2.5 space-y-1.5">
+                <div className="flex items-center justify-between gap-2 pb-1 border-b border-yellow-500/30">
+                  <span className="text-[9px] uppercase tracking-wide text-yellow-500 font-mono font-semibold">
+                    T-NOTE · {(t.mscItem || "sin item").toString().slice(0, 14)}
                   </span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => copyTNote(t)}
-                      className="text-muted-foreground hover:text-primary p-1 rounded-md transition-smooth"
+                      className="text-yellow-500 hover:text-yellow-300 p-1 rounded-md transition-smooth"
                       aria-label="Copiar T-Note"
                       title="Copiar al portapapeles"
                     >
@@ -239,7 +239,7 @@ export const Notepad = () => {
                     </button>
                     <button
                       onClick={() => removeTNote(t.id)}
-                      className="text-muted-foreground hover:text-destructive p-1 rounded-md transition-smooth"
+                      className="text-yellow-500 hover:text-destructive p-1 rounded-md transition-smooth"
                       aria-label="Eliminar T-Note"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -249,34 +249,38 @@ export const Notepad = () => {
 
                 <div className="space-y-1">
                   {BASE_FIELDS.map((f) => (
-                    <div key={f.key} className="flex items-center gap-2">
-                      <label className="text-[10px] text-muted-foreground w-[120px] shrink-0 truncate" title={f.label}>
+                    <div key={f.key} className="flex items-baseline gap-1.5 flex-wrap">
+                      <label
+                        className="text-[10px] text-yellow-600 font-mono whitespace-nowrap"
+                        title={f.label}
+                      >
                         {f.label}:
                       </label>
                       <input
                         value={(t[f.key] as string) ?? ""}
                         onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
-                        className="flex-1 bg-background/60 rounded-md px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-accent"
+                        className="flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs text-yellow-300 font-mono outline-none focus:border-yellow-400"
                       />
                     </div>
                   ))}
 
                   {t.extras.map((ex) => (
-                    <div key={ex.id} className="flex items-center gap-2">
+                    <div key={ex.id} className="flex items-baseline gap-1.5 flex-wrap">
                       <input
                         value={ex.label}
                         onChange={(e) => updateExtra(t.id, ex.id, { label: e.target.value })}
-                        placeholder="Campo"
-                        className="w-[120px] shrink-0 bg-transparent border-b border-dashed border-border/60 px-1 py-0.5 text-[10px] text-muted-foreground focus:outline-none focus:border-accent"
+                        placeholder="Campo:"
+                        size={Math.max(6, ex.label.length + 1)}
+                        className="bg-transparent border-b border-dashed border-yellow-500/30 px-1 py-0.5 text-[10px] text-yellow-600 font-mono focus:outline-none focus:border-yellow-400"
                       />
                       <input
                         value={ex.value}
                         onChange={(e) => updateExtra(t.id, ex.id, { value: e.target.value })}
-                        className="flex-1 bg-background/60 rounded-md px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-accent"
+                        className="flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs text-yellow-300 font-mono outline-none focus:border-yellow-400"
                       />
                       <button
                         onClick={() => removeExtra(t.id, ex.id)}
-                        className="text-muted-foreground hover:text-destructive p-0.5 rounded-md transition-smooth"
+                        className="text-yellow-600 hover:text-destructive p-0.5 rounded-md transition-smooth"
                         aria-label="Quitar campo"
                       >
                         <X className="h-3 w-3" />
@@ -288,7 +292,7 @@ export const Notepad = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 rounded-full text-[10px] mt-1"
+                  className="h-6 rounded-full text-[10px] mt-1 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
                   onClick={() => addExtra(t.id)}
                 >
                   <Plus className="h-3 w-3" />
