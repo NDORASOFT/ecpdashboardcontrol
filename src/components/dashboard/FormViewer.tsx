@@ -28,41 +28,42 @@ export const FormViewer = ({
     return u;
   };
 
-  // Heuristic: when the iframe has focus and then the window regains focus
-  // (user clicked "Submit" inside the form), trigger the count prompt.
+  // Heuristic: only trigger if iframe was focused for at least MIN_FOCUS_MS
+  // before window regains focus (real form interaction, not a quick click-out).
   useEffect(() => {
-    if (!url || !onSubmitDetected) return;
+    if (!url || !onSubmitDetected || !autoDetect) return;
 
-    let iframeWasFocused = false;
+    const MIN_FOCUS_MS = 8000; // require at least 8s of iframe focus
+    const DEBOUNCE_MS = 5000;
 
     const checkFocus = () => {
       if (document.activeElement === iframeRef.current) {
-        iframeWasFocused = true;
+        if (focusStartRef.current === 0) {
+          focusStartRef.current = Date.now();
+        }
       }
     };
 
     const onWindowFocus = () => {
-      if (iframeWasFocused) {
-        const now = Date.now();
-        // debounce 2s to avoid double triggers
-        if (now - lastTriggerRef.current > 2000) {
-          lastTriggerRef.current = now;
-          onSubmitDetected();
-        }
-        iframeWasFocused = false;
+      const focusedFor = focusStartRef.current ? Date.now() - focusStartRef.current : 0;
+      focusStartRef.current = 0;
+      if (focusedFor < MIN_FOCUS_MS) return;
+      const now = Date.now();
+      if (now - lastTriggerRef.current > DEBOUNCE_MS) {
+        lastTriggerRef.current = now;
+        onSubmitDetected();
       }
     };
 
-    const interval = setInterval(checkFocus, 300);
+    const interval = setInterval(checkFocus, 500);
     window.addEventListener("focus", onWindowFocus);
-    window.addEventListener("blur", checkFocus);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", onWindowFocus);
-      window.removeEventListener("blur", checkFocus);
+      focusStartRef.current = 0;
     };
-  }, [url, onSubmitDetected, key]);
+  }, [url, onSubmitDetected, key, autoDetect]);
 
   return (
     <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
