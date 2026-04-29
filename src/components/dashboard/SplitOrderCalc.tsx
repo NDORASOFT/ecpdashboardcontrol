@@ -35,12 +35,18 @@ const parseCart = (raw: string): Cart => {
     freight = 0,
     total = 0;
   for (const line of lines) {
-    const l = line.toLowerCase();
-    if (!l.trim()) continue;
-    if (/sub\s*total|subtotal/.test(l)) subtotal = num(line);
-    else if (/\btax\b|impuesto/.test(l)) tax = num(line);
-    else if (/freight|shipping|env[ií]o|flete/.test(l)) freight = num(line);
-    else if (/total/.test(l)) total = num(line);
+    const l = line.toLowerCase().trim();
+    if (!l) continue;
+    // Order matters: check subtotal before total (since "subtotal" contains "total")
+    if (/\b(sub\s*t(o(t(a(l)?)?)?)?|subt|sub-?total)\b/.test(l)) {
+      subtotal = num(line);
+    } else if (/\b(tax|tx|impuesto|iva)\b/.test(l)) {
+      tax = num(line);
+    } else if (/\b(freight|frt|frgh|shipping|ship|env[ií]o|flete)\b/.test(l)) {
+      freight = num(line);
+    } else if (/\b(tot(a(l)?)?|grand\s*total|order\s*total|amount)\b/.test(l)) {
+      total = num(line);
+    }
   }
   return { subtotal, tax, freight, total, raw };
 };
