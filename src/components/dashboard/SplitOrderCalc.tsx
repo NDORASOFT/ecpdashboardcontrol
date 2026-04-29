@@ -86,19 +86,19 @@ const CartInput = ({
     }
   };
   return (
-    <div className="bg-secondary/50 rounded-xl p-2.5 flex flex-col gap-2">
+    <div className="bg-black border border-yellow-500/40 rounded-xl p-2.5 flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <span
           className="h-2 w-2 rounded-full"
           style={{ background: `hsl(var(--${accent}))` }}
         />
-        <span className="text-[11px] font-semibold">{label}</span>
+        <span className="text-[11px] font-semibold text-yellow-400 font-mono uppercase tracking-wider">{label}</span>
         <div className="ml-auto flex items-center gap-1">
           {showCopyAmount && cart.total > 0 && (
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 px-2 text-[10px]"
+              className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
               onClick={copyAmount}
               title="Copiar order amount"
             >
@@ -109,7 +109,7 @@ const CartInput = ({
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
             onClick={paste}
             title="Pegar desde portapapeles"
           >
@@ -119,7 +119,7 @@ const CartInput = ({
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
             onClick={() => onChange({ ...EMPTY })}
             title="Limpiar"
           >
@@ -132,25 +132,25 @@ const CartInput = ({
         value={cart.raw}
         onChange={(e) => onChange(parseCart(e.target.value))}
         placeholder={"Pega aquí el carrito\nSubtotal $...\nTax $...\nFreight $...\nTotal $..."}
-        className="w-full resize-none bg-background/60 rounded-lg p-2 text-[11px] outline-none focus:ring-1 focus:ring-accent scrollbar-thin h-20"
+        className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-2 text-[11px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-20"
       />
 
-      <div className="grid grid-cols-2 gap-1 text-[10px]">
-        <div className="flex justify-between bg-background/40 rounded px-1.5 py-0.5">
-          <span className="text-muted-foreground">Sub</span>
-          <span className="font-mono">{fmt(cart.subtotal)}</span>
+      <div className="grid grid-cols-2 gap-1 text-[10px] font-mono">
+        <div className="flex justify-between bg-yellow-500/5 border border-yellow-500/20 rounded px-1.5 py-0.5">
+          <span className="text-yellow-600">SUB</span>
+          <span className="text-yellow-400">{fmt(cart.subtotal)}</span>
         </div>
-        <div className="flex justify-between bg-background/40 rounded px-1.5 py-0.5">
-          <span className="text-muted-foreground">Tax</span>
-          <span className="font-mono">{fmt(cart.tax)}</span>
+        <div className="flex justify-between bg-yellow-500/5 border border-yellow-500/20 rounded px-1.5 py-0.5">
+          <span className="text-yellow-600">TAX</span>
+          <span className="text-yellow-400">{fmt(cart.tax)}</span>
         </div>
-        <div className="flex justify-between bg-background/40 rounded px-1.5 py-0.5">
-          <span className="text-muted-foreground">Freight</span>
-          <span className="font-mono">{fmt(cart.freight)}</span>
+        <div className="flex justify-between bg-yellow-500/5 border border-yellow-500/20 rounded px-1.5 py-0.5">
+          <span className="text-yellow-600">FRT</span>
+          <span className="text-yellow-400">{fmt(cart.freight)}</span>
         </div>
-        <div className="flex justify-between bg-background/40 rounded px-1.5 py-0.5 font-semibold">
-          <span>Total</span>
-          <span className="font-mono">{fmt(cart.total)}</span>
+        <div className="flex justify-between bg-yellow-500/10 border border-yellow-500/40 rounded px-1.5 py-0.5 font-semibold">
+          <span className="text-yellow-300">TOT</span>
+          <span className="text-yellow-300">{fmt(cart.total)}</span>
         </div>
       </div>
     </div>
