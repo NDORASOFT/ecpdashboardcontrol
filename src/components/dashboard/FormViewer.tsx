@@ -52,6 +52,12 @@ export const FormViewer = ({
     return u;
   };
 
+  // Reset iframe load tracking whenever the form is reloaded or URL changes
+  useEffect(() => {
+    loadCountRef.current = 0;
+    initialLoadAtRef.current = 0;
+  }, [key, url]);
+
   // Heuristic: only trigger if iframe was focused for at least MIN_FOCUS_MS
   // before window regains focus (real form interaction, not a quick click-out).
   useEffect(() => {
