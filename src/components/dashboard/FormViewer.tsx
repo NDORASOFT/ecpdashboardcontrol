@@ -72,11 +72,7 @@ export const FormViewer = ({
       const focusedFor = focusStartRef.current ? Date.now() - focusStartRef.current : 0;
       focusStartRef.current = 0;
       if (focusedFor < MIN_FOCUS_MS) return;
-      const now = Date.now();
-      if (now - lastTriggerRef.current > DEBOUNCE_MS) {
-        lastTriggerRef.current = now;
-        onSubmitDetected();
-      }
+      triggerSubmit("focus-return");
     };
 
     const interval = setInterval(checkFocus, 500);
