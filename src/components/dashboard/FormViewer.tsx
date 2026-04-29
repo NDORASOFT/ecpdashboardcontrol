@@ -191,6 +191,18 @@ export const FormViewer = ({
           </div>
         )}
       </div>
+
+      {url && onSubmitDetected && (
+        <Button
+          size="sm"
+          variant="default"
+          className="mt-2 h-9 w-full bg-mint text-primary-foreground hover:brightness-110 font-semibold"
+          onClick={() => triggerSubmit("manual-button")}
+        >
+          <Check className="h-4 w-4 mr-1.5" />
+          Submit contado
+        </Button>
+      )}
     </Card>
   );
 };
