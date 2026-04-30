@@ -19,6 +19,9 @@ export const OrderCounter = ({
   setOtherCount: (n: number) => void;
   onReset: () => void;
 }) => {
+  // Big number = PO regular (the primary KPI).
+  // Bottom-left = "Worked POs" total (PO + 76 Screen, count).
+  // Bottom-right = "76 Screen" (otherCount).
   return (
     <Card className="surface-card p-4 flex flex-col h-full">
       <div className="flex items-center gap-2 mb-2">
@@ -26,7 +29,7 @@ export const OrderCounter = ({
           <Hash className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-display text-xs font-semibold leading-tight">Órdenes procesadas</h3>
+          <h3 className="font-display text-xs font-semibold leading-tight">PO Counter</h3>
           <p className="text-[9px] text-muted-foreground">Hoy</p>
         </div>
         <Button
@@ -45,61 +48,61 @@ export const OrderCounter = ({
           size="icon"
           variant="secondary"
           className="h-12 w-12 rounded-2xl"
-          onClick={() => setCount(Math.max(0, count - 1))}
+          onClick={() => {
+            const next = Math.max(0, poCount - 1);
+            setPoCount(next);
+            setCount(Math.max(0, count - 1));
+          }}
         >
           <Minus className="h-5 w-5" />
         </Button>
         <div className="text-center">
-          <div className="font-display text-5xl font-bold tabular-nums">{count}</div>
-          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">total</div>
+          <div className="font-display text-5xl font-bold tabular-nums">{poCount}</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">PO</div>
         </div>
         <Button
           size="icon"
           className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground hover:brightness-110"
-          onClick={() => setCount(count + 1)}
+          onClick={() => {
+            setPoCount(poCount + 1);
+            setCount(count + 1);
+          }}
         >
           <Plus className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Breakdown PO / Otros */}
+      {/* Bottom: Worked POs (total) + 76 Screen */}
       <div className="mt-2 grid grid-cols-2 gap-2 text-center">
-        <div className="rounded-lg bg-secondary/60 py-1.5 px-2 flex items-center justify-between">
-          <button
-            onClick={() => setPoCount(Math.max(0, poCount - 1))}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Menos PO"
-          >
-            <Minus className="h-3 w-3" />
-          </button>
+        <div className="rounded-lg bg-secondary/60 py-1.5 px-2 flex items-center justify-center">
           <div className="leading-none">
-            <div className="text-sm font-semibold tabular-nums">{poCount}</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">PO</div>
+            <div className="text-sm font-semibold tabular-nums">{count}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Worked POs</div>
           </div>
-          <button
-            onClick={() => setPoCount(poCount + 1)}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Más PO"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
         </div>
         <div className="rounded-lg bg-secondary/60 py-1.5 px-2 flex items-center justify-between">
           <button
-            onClick={() => setOtherCount(Math.max(0, otherCount - 1))}
+            onClick={() => {
+              const next = Math.max(0, otherCount - 1);
+              setOtherCount(next);
+              setCount(Math.max(0, count - 1));
+            }}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Menos Otros"
+            aria-label="Menos 76 Screen"
           >
             <Minus className="h-3 w-3" />
           </button>
           <div className="leading-none">
             <div className="text-sm font-semibold tabular-nums">{otherCount}</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Otros</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">76 Screen</div>
           </div>
           <button
-            onClick={() => setOtherCount(otherCount + 1)}
+            onClick={() => {
+              setOtherCount(otherCount + 1);
+              setCount(count + 1);
+            }}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Más Otros"
+            aria-label="Más 76 Screen"
           >
             <Plus className="h-3 w-3" />
           </button>
