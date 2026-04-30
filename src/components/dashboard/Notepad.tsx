@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check } from "lucide-react";
+import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Truck, ClipboardPaste } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
+import { computeESD } from "@/lib/leadTime";
 
 type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
@@ -26,7 +27,7 @@ const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras">; label: string }[] 
   { key: "michaelRno", label: "Michael RNO" },
   { key: "sw", label: "SW" },
   { key: "netPrice", label: "Net price" },
-  { key: "leapTime", label: "Leap Time" },
+  { key: "leapTime", label: "Lead Time" },
   { key: "shipFrom", label: "Ship From" },
   { key: "minDsFee", label: "Min / DS Fee" },
   { key: "returnableRestockableFee", label: "Returnable / Restockable Fee" },
