@@ -77,7 +77,7 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
               </>
             ) : (
               <>
-                <div className="text-3xl animate-float">{mood.face}</div>
+                <div className={`text-3xl ${worried ? "animate-worry" : "animate-float"}`}>{mood.face}</div>
                 <div className="text-[9px] text-muted-foreground mt-1">{mood.label}</div>
               </>
             )}
