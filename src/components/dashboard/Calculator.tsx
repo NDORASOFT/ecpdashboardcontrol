@@ -21,7 +21,7 @@ export const Calculator = () => {
   const [discount, setDiscount] = useState("");
 
   const input = (n: string) => {
-    if (overwrite) {
+    if (overwrite || display === "0") {
       setDisplay(n === "." ? "0." : n);
       setOverwrite(false);
     } else {
