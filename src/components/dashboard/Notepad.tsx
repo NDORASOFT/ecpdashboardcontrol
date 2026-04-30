@@ -73,19 +73,19 @@ export const Notepad = () => {
   const [pendingNetPrice, setPendingNetPrice] = useState<string | null>(null);
 
   // Always keep at least one empty T-Note at the top so user can start typing.
-  // The "empty" one is non-persistent visually but real in state once edited.
   useEffect(() => {
-    if (tnotes.length === 0) setTnotes([emptyTNote()]);
-    else {
-      const top = tnotes[0];
-      const isEmpty =
-        !top.mscItem && !top.michaelRno && !top.sw && !top.netPrice &&
-        !top.leapTime && !top.shipFrom && !top.minDsFee && !top.returnableRestockableFee &&
-        top.extras.length === 0;
-      if (!isEmpty) setTnotes([emptyTNote(), ...tnotes]);
+    if (tnotes.length === 0) {
+      setTnotes([emptyTNote()]);
+      return;
     }
+    const top = tnotes[0];
+    const isEmpty =
+      !top.mscItem && !top.michaelRno && !top.sw && !top.netPrice &&
+      !top.leapTime && !top.shipFrom && !top.minDsFee && !top.returnableRestockableFee &&
+      top.extras.length === 0;
+    if (!isEmpty) setTnotes([emptyTNote(), ...tnotes]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tnotes.length === 0 ? 0 : (tnotes[0]?.mscItem || "") + (tnotes[0]?.netPrice || "")]);
+  }, [tnotes]);
 
   // Listen for discount-calculated events to enable "paste to net price" indicator
   // on the most recent T-Note.
