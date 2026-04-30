@@ -28,6 +28,14 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const mood = moodFor(pct);
   const v = vehicleFor(pct);
   const Icon = v.icon;
+  const worried = pct < 0.7;
+
+  // Rotating motivational quote (every 8s)
+  const [qIdx, setQIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setQIdx((i) => (i + 1) % QUOTES.length), 8000);
+    return () => clearInterval(id);
+  }, []);
 
   // SVG ring
   const size = 120;
@@ -37,7 +45,7 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const dash = c * pct;
 
   return (
-    <Card className="surface-card p-3 flex flex-col items-center gap-2 h-full overflow-hidden">
+    <Card className={`surface-card p-3 flex flex-col items-center gap-2 h-full overflow-hidden ${worried ? "ring-2 ring-coral/40" : ""}`}>
       {/* Title */}
       <div className="w-full text-center">
         <p className="font-display text-xs font-semibold leading-tight">Daily Goal</p>
