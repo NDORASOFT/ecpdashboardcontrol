@@ -70,6 +70,44 @@ export const Notepad = () => {
 
   const [tnotes, setTnotes] = useLocalStorage<TNote[]>("ecp.tnotes.v2", []);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pendingNetPrice, setPendingNetPrice] = useState<string | null>(null);
+
+  // Always keep at least one empty T-Note at the top so user can start typing.
+  // The "empty" one is non-persistent visually but real in state once edited.
+  useEffect(() => {
+    if (tnotes.length === 0) setTnotes([emptyTNote()]);
+    else {
+      const top = tnotes[0];
+      const isEmpty =
+        !top.mscItem && !top.michaelRno && !top.sw && !top.netPrice &&
+        !top.leapTime && !top.shipFrom && !top.minDsFee && !top.returnableRestockableFee &&
+        top.extras.length === 0;
+      if (!isEmpty) setTnotes([emptyTNote(), ...tnotes]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tnotes.length === 0 ? 0 : (tnotes[0]?.mscItem || "") + (tnotes[0]?.netPrice || "")]);
+
+  // Listen for discount-calculated events to enable "paste to net price" indicator
+  // on the most recent T-Note.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ value: string }>;
+      if (!ce.detail?.value) return;
+      setPendingNetPrice(ce.detail.value);
+      setMode("tnotes");
+    };
+    window.addEventListener("ecp:net-price", handler as EventListener);
+    return () => window.removeEventListener("ecp:net-price", handler as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const applyPendingNetPrice = () => {
+    if (!pendingNetPrice || tnotes.length === 0) return;
+    const target = tnotes[0];
+    updateTNote(target.id, { netPrice: pendingNetPrice });
+    setPendingNetPrice(null);
+    toast({ title: "Net price actualizado", description: `$${pendingNetPrice}` });
+  };
 
   const active = notes.find((n) => n.id === activeId) ?? notes[0];
 
