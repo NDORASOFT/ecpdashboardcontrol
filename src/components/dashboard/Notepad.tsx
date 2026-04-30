@@ -255,11 +255,7 @@ export const Notepad = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2.5 pr-1">
-            {tnotes.length === 0 && (
-              <div className="text-center text-xs text-muted-foreground py-8">
-                No hay T-Notes todavía. Crea uno para empezar.
-              </div>
-            )}
+            {/* always at least one T-Note via effect */}
 
             {tnotes.map((t) => (
               <div key={t.id} className="bg-black border border-yellow-500/40 rounded-xl p-2.5 space-y-1.5">
