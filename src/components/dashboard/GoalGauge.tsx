@@ -1,10 +1,24 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ShippingProgress, vehicleFor } from "./ShippingProgress";
+
+const QUOTES = [
+  "Bonjour, courage — small steps, big day.",
+  "Doucement, but never stop. Keep typing.",
+  "C'est la vie — one PO at a time.",
+  "Allez, allez! Your goal is closer than it looks.",
+  "Petit à petit, l'oiseau fait son nid. Build it order by order.",
+  "On y va — momentum beats perfection.",
+  "Chaque ordre compte. Every order counts.",
+  "Respire, focus, livre. Breathe, focus, deliver.",
+  "Vas-y, champion — finish strong.",
+  "La patience est amère, mais son fruit est doux. Push through.",
+];
 
 const moodFor = (pct: number) => {
   if (pct >= 1) return { face: "🤩", label: "¡Meta!", color: "hsl(var(--mint))" };
   if (pct >= 0.66) return { face: "😄", label: "Cerca", color: "hsl(var(--sun))" };
-  return { face: "🙂", label: "En ruta", color: "hsl(var(--coral))" };
+  return { face: "😟", label: "Push it", color: "hsl(var(--coral))" };
 };
 
 export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }) => {
