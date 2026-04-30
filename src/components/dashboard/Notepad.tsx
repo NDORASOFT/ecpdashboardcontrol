@@ -287,21 +287,60 @@ export const Notepad = () => {
                 </div>
 
                 <div className="space-y-1">
-                  {BASE_FIELDS.map((f) => (
-                    <div key={f.key} className="flex items-baseline gap-1.5 flex-wrap">
-                      <label
-                        className="text-[10px] text-yellow-600 font-mono whitespace-nowrap"
-                        title={f.label}
-                      >
-                        {f.label}:
-                      </label>
-                      <input
-                        value={(t[f.key] as string) ?? ""}
-                        onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
-                        className="flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs text-yellow-300 font-mono outline-none focus:border-yellow-400"
-                      />
-                    </div>
-                  ))}
+                  {BASE_FIELDS.map((f) => {
+                    const isLead = f.key === "leapTime";
+                    const isNetPrice = f.key === "netPrice";
+                    const isTopMost = tnotes[0]?.id === t.id;
+                    const showPasteHint = isNetPrice && isTopMost && !!pendingNetPrice;
+                    const esd = isLead ? computeESD((t.leapTime as string) || "") : null;
+                    return (
+                      <div key={f.key}>
+                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                          <label
+                            className="text-[10px] text-yellow-600 font-mono whitespace-nowrap"
+                            title={f.label}
+                          >
+                            {f.label}:
+                          </label>
+                          <input
+                            value={(t[f.key] as string) ?? ""}
+                            onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
+                            onKeyDown={(e) => {
+                              if (showPasteHint && e.key === "Tab") {
+                                e.preventDefault();
+                                applyPendingNetPrice();
+                              }
+                            }}
+                            placeholder={showPasteHint ? `Tab ↹ pega $${pendingNetPrice}` : ""}
+                            className={`flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 ${
+                              showPasteHint
+                                ? "text-yellow-500/40 placeholder:text-yellow-500/50 italic"
+                                : "text-yellow-300"
+                            }`}
+                          />
+                          {showPasteHint && (
+                            <button
+                              onClick={applyPendingNetPrice}
+                              className="shrink-0 inline-flex items-center gap-1 rounded-md bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 px-1.5 py-0.5 text-[9px] font-mono"
+                              title="Pegar precio con descuento al Net price"
+                            >
+                              <ClipboardPaste className="h-3 w-3" />
+                              ${pendingNetPrice}
+                            </button>
+                          )}
+                        </div>
+                        {isLead && esd?.label && (
+                          <div className="flex items-center gap-1.5 pl-3 mt-0.5">
+                            <Truck className="h-3 w-3 text-yellow-500" />
+                            <span className="text-[10px] font-mono text-yellow-600">ESD</span>
+                            <span className="text-[11px] font-mono text-yellow-300 as400-blink">
+                              {esd.label}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
 
                   {t.extras.map((ex) => (
                     <div key={ex.id} className="flex items-baseline gap-1.5 flex-wrap">
