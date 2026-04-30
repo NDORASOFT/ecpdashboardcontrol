@@ -104,6 +104,14 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
         <div className="text-[10px] text-center mt-1.5 font-medium" style={{ color: v.color }}>
           {remaining > 0 ? `Faltan ${remaining} órdenes` : "¡Meta alcanzada! 🎉"}
         </div>
+        <div
+          key={qIdx}
+          className={`text-[10px] text-center mt-1 italic text-muted-foreground px-1 leading-tight transition-opacity duration-700 ${
+            worried ? "text-coral animate-pulse-soft" : ""
+          }`}
+        >
+          “{QUOTES[qIdx]}”
+        </div>
       </div>
     </Card>
   );
