@@ -13,7 +13,6 @@ import { LayoutDashboard } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -53,8 +52,6 @@ const Index = () => {
 
   useEffect(() => {
     document.title = "ECP Data Entry Dashboard";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "ECP Data Entry Dashboard: T-Notes, calculadora, split orders, Avaya dialer y vendor vault.");
   }, []);
 
   const handleSubmitDetected = () => {
@@ -70,7 +67,7 @@ const Index = () => {
       {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
-        poNumber: draftPO.trim(),
+        poNumber: draftPO.trim().toUpperCase(),
         amount,
         type,
         cart: draftCart.trim() || undefined,
@@ -81,11 +78,9 @@ const Index = () => {
     if (type !== "Cancel order") {
       setCount(count + 1);
       if (type === "PO regular") setPoCount(poCount + 1);
-      else if (type === "76 Screen") setOtherCount(otherCount + 1);
       else setOtherCount(otherCount + 1);
     }
     setAskType(false);
-    // Refresh form back to initial URL after counting
     setTimeout(() => formRef.current?.reload(), 200);
   };
 
@@ -101,115 +96,100 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-6">
-      <header className="max-w-[1500px] mx-auto mb-6 flex items-center gap-3">
-        <div className="h-11 w-11 rounded-2xl bg-gradient-charcoal text-primary-foreground grid place-items-center shadow-soft">
+    <div className="min-h-screen w-full px-3 sm:px-5 lg:px-6 py-4">
+      <header className="max-w-[1500px] mx-auto mb-4 flex items-center gap-3">
+        <div className="h-10 w-10 rounded-2xl bg-gradient-charcoal text-primary-foreground grid place-items-center shadow-soft">
           <LayoutDashboard className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold leading-tight">
+          <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight">
             ECP Data Entry Dashboard
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Tu control de tareas diarias en un solo lugar
+          <p className="text-[10px] text-muted-foreground">
+            PO#-centric order tracking
           </p>
         </div>
         <div className="ml-auto hidden sm:flex items-center gap-2 surface-card px-3 py-1.5">
           <span className="h-2 w-2 rounded-full bg-mint animate-pulse-soft" />
-          <span className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+          <span className="text-[10px] text-muted-foreground">
+            {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
           </span>
         </div>
       </header>
 
-      <main className="max-w-[1500px] mx-auto grid grid-cols-12 gap-4 auto-rows-[minmax(0,_auto)]">
-        {/* Row 1 */}
-        <div className="col-span-12 md:col-span-3 min-h-[340px]">
+      <main className="max-w-[1500px] mx-auto grid grid-cols-12 gap-3 auto-rows-[minmax(0,_auto)]">
+        {/* Col 1: Counter + Calculator + Cart */}
+        <div className="col-span-12 md:col-span-2 flex flex-col gap-3">
+          <OrderCounter
+            count={count} setCount={setCount}
+            poCount={poCount} setPoCount={setPoCount}
+            otherCount={otherCount} setOtherCount={setOtherCount}
+            onReset={resetAll}
+          />
           <Calculator />
-        </div>
-        <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px]">
-          <Notepad />
-        </div>
-        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px] flex flex-col gap-4">
-          <div className="shrink-0">
-            <OrderCounter
-              count={count}
-              setCount={setCount}
-              poCount={poCount}
-              setPoCount={setPoCount}
-              otherCount={otherCount}
-              setOtherCount={setOtherCount}
-              onReset={resetAll}
-            />
-          </div>
-          <div className="flex-1 min-h-0">
-            <FormViewer ref={formRef} onSubmitDetected={handleSubmitDetected} />
-          </div>
-        </div>
-        <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px]">
-          <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
-        </div>
-
-        {/* Row 2 */}
-        <div className="col-span-12 md:col-span-3 min-h-[340px]">
           <SplitOrderCalc />
         </div>
 
-        {/* Row 3 — new tools */}
-        <div className="col-span-12 md:col-span-4 min-h-[420px] relative">
+        {/* Col 2: PO# Notes (tall) */}
+        <div className="col-span-12 md:col-span-4 min-h-[600px]">
+          <Notepad />
+        </div>
+
+        {/* Col 3: Form Viewer (tall) */}
+        <div className="col-span-12 md:col-span-4 min-h-[600px]">
+          <FormViewer ref={formRef} onSubmitDetected={handleSubmitDetected} />
+        </div>
+
+        {/* Col 4: Goal + History */}
+        <div className="col-span-12 md:col-span-2 min-h-[600px]">
+          <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
+        </div>
+
+        {/* Bottom row */}
+        <div className="col-span-12 md:col-span-5 min-h-[350px]">
           <VendorVault />
         </div>
-        <div className="col-span-12 md:col-span-3 min-h-[420px]">
+        <div className="col-span-12 md:col-span-3 min-h-[350px]">
           <Dialer />
         </div>
       </main>
 
-      <footer className="max-w-[1500px] mx-auto mt-6 flex flex-col sm:flex-row items-center justify-center gap-2 text-[10px] text-muted-foreground">
-        <span>
-          Created by W38 Michael Ponce<sup>™</sup>
-        </span>
+      <footer className="max-w-[1500px] mx-auto mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 text-[9px] text-muted-foreground">
+        <span>Created by W38 Michael Ponce<sup>™</sup></span>
         <span className="hidden sm:inline">·</span>
-        <span>Datos guardados localmente en tu navegador</span>
+        <span>Saved locally</span>
         <span className="hidden sm:inline">·</span>
         <SuggestionDialog />
       </footer>
 
+      {/* Compact order entry modal */}
       <AlertDialog open={askType} onOpenChange={setAskType}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Registrar orden</AlertDialogTitle>
-            <AlertDialogDescription>
-              Detectamos un Submit. Llena los datos y elige el tipo. Al confirmar, el formulario se refresca al link inicial.
-            </AlertDialogDescription>
+        <AlertDialogContent className="max-w-sm p-4">
+          <AlertDialogHeader className="pb-1">
+            <AlertDialogTitle className="text-sm">Log Order</AlertDialogTitle>
           </AlertDialogHeader>
-          <div className="grid grid-cols-2 gap-2 py-2">
+          <div className="grid grid-cols-3 gap-2 py-1">
             <div>
-              <label className="text-[10px] text-muted-foreground">PO #</label>
-              <Input value={draftPO} onChange={(e) => setDraftPO(e.target.value)} placeholder="PO123456" />
+              <label className="text-[9px] text-muted-foreground">PO#</label>
+              <Input value={draftPO} onChange={(e) => setDraftPO(e.target.value)} placeholder="PO#" className="h-8 text-xs" />
             </div>
             <div>
-              <label className="text-[10px] text-muted-foreground">Order amount</label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={draftAmount}
-                onChange={(e) => setDraftAmount(e.target.value)}
-                placeholder="0.00"
-              />
+              <label className="text-[9px] text-muted-foreground">Amount</label>
+              <Input type="number" inputMode="decimal" value={draftAmount} onChange={(e) => setDraftAmount(e.target.value)} placeholder="0.00" className="h-8 text-xs" />
             </div>
-            <div className="col-span-2">
-              <label className="text-[10px] text-muted-foreground">Cart / nota (opcional)</label>
-              <Input value={draftCart} onChange={(e) => setDraftCart(e.target.value)} placeholder="Vendor / detalle" />
+            <div>
+              <label className="text-[9px] text-muted-foreground">Cart</label>
+              <Input value={draftCart} onChange={(e) => setDraftCart(e.target.value)} placeholder="Note" className="h-8 text-xs" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => confirmType("PO regular")}>PO regular</Button>
-            <Button onClick={() => confirmType("76 Screen")} variant="secondary">76 Screen</Button>
-            <Button onClick={() => confirmType("Cancel order")} variant="outline">Cancel order</Button>
-            <Button onClick={() => confirmType("Other")} variant="ghost">Other</Button>
+          <div className="flex items-center gap-1.5 pt-1">
+            <Button size="sm" className="h-7 text-xs flex-1" onClick={() => confirmType("PO regular")}>PO</Button>
+            <Button size="sm" variant="secondary" className="h-7 text-xs flex-1" onClick={() => confirmType("76 Screen")}>76 Scr</Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => confirmType("Cancel order")}>Cancel</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs flex-1" onClick={() => confirmType("Other")}>Other</Button>
           </div>
-          <AlertDialogFooter>
-            <Button variant="ghost" onClick={skipCount}>No contar</Button>
+          <AlertDialogFooter className="pt-1">
+            <button onClick={skipCount} className="text-[10px] text-muted-foreground hover:text-foreground">Skip counting</button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
