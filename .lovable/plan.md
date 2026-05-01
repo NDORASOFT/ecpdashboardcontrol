@@ -1,85 +1,100 @@
 
-Plan: rebalancear el layout del dashboard.
+# PO#-Centric Dashboard Refactor
 
-**Cambios en `src/pages/Index.tsx` (grid layout)**
+## Phase 1: PO#-centric notes + uppercase normalization
 
-Reorganizar la cuadrícula de 12 columnas para:
+**Notepad.tsx changes:**
+- Rename "T-Notes" to "PO#" throughout UI (toggle label, headers, card titles).
+- Each note's tab/title displays the PO# value (from `mscItem` or a new `poNumber` field).
+- Add `onBlur` handler to all text inputs that calls `.toUpperCase()` on the value.
+- Change date display to MM/DD/YY format; store raw values as MMDDYY (no slashes). Update `formatESD` in `leadTime.ts` accordingly.
+- Remove the "Tab to paste" hint button in Net Price if the paste analyzer icon already covers it (Phase 2 will add the analyzer).
+- Monetary fields (`netPrice`, `minDsFee`, fees) display with `$` prefix in read mode.
 
-1. **Calculadora**: más corta (no row-span-2). Una sola altura, ~min-h-[340px].
-2. **To-Do + OrderCounter merged**: nueva columna grande que ocupa ~1/3 del ancho y se extiende verticalmente (row-span-2), uniendo la lista de tareas arriba y el contador de órdenes abajo dentro de la misma card-area.
-3. **FormViewer**: se mantiene grande (col-span-4, row-span-2).
-4. **GoalGauge** + **MoodChip**: se mantienen a la derecha apilados.
-5. **Notepad**: agrandar (col-span-5 o 6, min-h ~360px).
-6. **QuoteBucket**: achicar (col-span-3, min-h ~280px).
-7. **HistoryTable**: ocupa el ancho restante abajo.
+## Phase 2: Paste analyzer per module
 
-Nuevo esquema aproximado:
+Create a shared utility `src/lib/pasteAnalyzer.ts`:
+- `analyzePaste(text: string)` returns structured data: `{ poNumber?, netPrice?, leadTime?, shipFrom?, dsFee?, minFee?, restockFee?, vendorItem?, senderName?, senderEmail?, rawLines[] }`.
+- Regex-based extraction for PO# patterns (e.g., `PO\s*#?\s*\d+`), dollar amounts next to keywords, lead time patterns, email addresses, "From:" name parsing.
+
+Add a small clipboard/analyze icon button to these components:
+- **Notepad (PO# notes):** Paste text -> parse -> auto-fill fields. If PO# found, create or focus that PO# tab. If same vendor+item+PO# exists, show warning toast: "PO# vigente, use existing quote?"
+- **SplitOrderCalc (Cart):** Already has paste; enhance `parseCart` to also detect PO# and `TOT`/`tot` more aggressively (fix the existing regex).
+- **Calculator:** Add a paste icon that reads a dollar amount from clipboard and sets it as the price in discount mode.
+- **OrderCounter / submit modal:** Paste icon that reads PO# and amount from clipboard text.
+
+Email quote parsing logic (in `pasteAnalyzer.ts`):
+- Extract sender first name from "From: FirstName LastName" or similar patterns.
+- Extract email from angle brackets or standalone email pattern.
+- Store sender info in the `sw` field.
+- Map quote fields (Net Price, vendor item, lead time, DS fee, min, restocking) to the corresponding PO# note fields.
+
+## Phase 3: Layout reorganization
+
+**Index.tsx grid restructure:**
 
 ```text
-Row1: [Calc 3] [TodoList 3 rs2] [FormViewer 4 rs2] [GoalGauge 2]
-Row2: [Notepad 3 (debajo de Calc)]               [MoodChip 2]
-Row3: [OrderCounter 3 (debajo Todo? o merge)] [QuoteBucket 3] [History 6]
+Desktop (md+):
+┌─────────┬──────────────┬──────────────┬──────────┐
+│ Counter │              │              │ Goal     │
+│ (compact│  PO# Notes   │  Form Viewer │ (small)  │
+│  +calc) │  (tall)      │  (tall)      │          │
+│         │              │              │ History  │
+│ Cart    │              │              │ (below)  │
+└─────────┴──────────────┴──────────────┴──────────┘
+│ Vendor Vault           │ Dialer                   │
+└────────────────────────┴──────────────────────────┘
 ```
 
-Mejor opción: crear un wrapper "TodoList + OrderCounter" como una columna stack:
+- Left column: OrderCounter (compact), Calculator (collapsible - add a collapse toggle that hides the keypad and shows only the result bar), then SplitOrderCalc below.
+- Second column: Notepad/PO# notes (tall, row-span-2, preserving readable width).
+- Third column: FormViewer (tall, row-span-2).
+- Right column: GoalGauge (compact, smaller ring `size=90`) stacked with HistoryTable below (no full-height stretch).
 
-```text
-Row1: [Calc 3]      [Todo+Counter 3 rs2] [FormViewer 4 rs2] [Goal 2]
-Row2: [Notepad 5]   [(continúa)]         [(continúa)]       [Mood 2]
-Row3: [Notepad cont? no] [Quote 3] [History 6] ...
-```
+Calculator collapsible: Add a state `collapsed` that when true shows only the result display (1 line) and the discount toggle, hiding the keypad grid.
 
-Layout final propuesto (12 cols):
+## Phase 4: Split validation + history dashboard
 
-- Fila 1: Calc(3) | TodoCounter(3, row-span-2) | FormViewer(4, row-span-2) | Goal(2)
-- Fila 2: Notepad(3) | — | — | Mood(2)
-- Fila 3: Notepad cont... no. Mejor:
-  - Calc(3) h≈340
-  - Notepad(3) h≈340 debajo
-  - Columna media TodoCounter(3) h≈700 (todo arriba, contador abajo dentro de la misma card o dos cards stacked)
-  - FormViewer(4) h≈700
-  - Goal(2) + Mood(2) apilados a la derecha h≈340 c/u
-- Fila 3 (full): Quote(4) + History(8)
+**SplitOrderCalc.tsx:**
+- Replace the current diff display with a clear confirmation system:
+  - If all diffs are < $0.01: show a green "Totals Match" banner with checkmark.
+  - If mismatch: show each line item (Subtotal, Tax, Freight, Total) with red/green indicator and explicit label like "Tax increased by +$1.23" or "Freight match".
 
-**Merge Todo + Counter**: crear nuevo componente `TodoCounterColumn.tsx` que envuelva ambos en una sola columna con dos cards (Todo arriba flex-1, Counter abajo compacto). Alternativa más simple: en `Index.tsx` usar un `<div className="flex flex-col gap-4 h-full">` con `<TodoList />` y `<OrderCounter />` dentro de un col-span-3 row-span-2.
+**HistoryTable.tsx / GoalHistoryToggle.tsx - add mini dashboard tab:**
+- Add a third tab "Stats" alongside Daily/Submissions.
+- Stats view shows:
+  - Weekly goal progress (sum of last 7 days vs goal*7).
+  - Average orders/day (from history).
+  - Average time between submits (computed from submission timestamps).
+  - Return count to 76 Screen (sum of `otherCount` from history).
+  - Top 3 podium placeholder (shows current user's stats; team data would need backend, so show a placeholder or single-user leaderboard).
+- All computed from existing localStorage data.
 
-Voy por la alternativa simple (sin componente nuevo).
+## Phase 5: Modal cleanup + responsive polish
 
-**Cambios tipográficos en cards**
+**Index.tsx AlertDialog (order entry modal):**
+- Make the modal more compact:
+  - Reduce padding and vertical spacing.
+  - Put PO#, Amount, and Cart in a single row or tight 3-column grid.
+  - Move type buttons to a horizontal row of small pills instead of 2x2 grid.
+  - Place "No contar" as a small text link, not a full button.
+- Keep all current fields (PO#, amount, cart, type).
 
-Bajar un nivel los títulos de cada card. Actualmente usan `text-sm font-semibold`. Cambiar a `text-xs font-semibold` en los headers de:
-- Calculator.tsx
-- Notepad.tsx
-- TodoList.tsx
-- QuoteBucket.tsx
-- FormViewer.tsx
-- OrderCounter.tsx
-- GoalGauge.tsx
-- HistoryTable.tsx
+**Responsive polish:**
+- Test grid at various widths; ensure columns collapse gracefully at `sm`, `md`, `lg`.
+- PO# notes column maintains min-width for readability.
+- Goal widget never stretches to fill excessive vertical space.
 
-Y los subtítulos de `text-[10px]` → `text-[9px]` (mantener legibilidad pero un step menor).
+## Files to create
+- `src/lib/pasteAnalyzer.ts` — shared paste parsing utility
 
-**Quitar estado "empezando" del MoodChip / GoalGauge**
-
-Revisar `GoalGauge.tsx` para encontrar el estado inicial llamado "empezando" (3 estados: bajo, medio, meta). Eliminar el label/face de "empezando" — cuando count es 0 o muy bajo, no mostrar nada (o mostrar vacío) hasta que cruce el umbral del estado "bajo". Necesito leer el archivo para saber el wording exacto.
-
-**Archivos a modificar**
-
-1. `src/pages/Index.tsx` — reestructurar grid, mergear Todo+Counter en una columna.
-2. `src/components/dashboard/Calculator.tsx` — bajar título.
-3. `src/components/dashboard/Notepad.tsx` — bajar título.
-4. `src/components/dashboard/TodoList.tsx` — bajar título.
-5. `src/components/dashboard/QuoteBucket.tsx` — bajar título.
-6. `src/components/dashboard/FormViewer.tsx` — bajar título.
-7. `src/components/dashboard/OrderCounter.tsx` — bajar título.
-8. `src/components/dashboard/GoalGauge.tsx` — bajar título + remover estado "empezando".
-9. `src/components/dashboard/HistoryTable.tsx` — bajar título.
-
-**Resultado visual esperado**
-
-- Calculadora compacta (no domina la altura).
-- To-Do alto + contador de órdenes pegado abajo, juntos ocupando ~1/3 vertical.
-- Notepad notablemente más grande.
-- Quote Requests más pequeño.
-- Form viewer y goal/mood igual.
-- Tipografía un punto más fina y sin la cara/label inicial "empezando".
+## Files to modify
+- `src/components/dashboard/Notepad.tsx` — rename to PO#, add analyzer, uppercase, monetary display
+- `src/components/dashboard/Calculator.tsx` — add collapsible mode, paste icon
+- `src/components/dashboard/SplitOrderCalc.tsx` — enhanced validation UI
+- `src/components/dashboard/OrderCounter.tsx` — compact layout adjustments
+- `src/components/dashboard/GoalGauge.tsx` — smaller ring, compact layout
+- `src/components/dashboard/GoalHistoryToggle.tsx` — add Stats tab
+- `src/components/dashboard/HistoryTable.tsx` — add Stats view with weekly/avg metrics
+- `src/lib/leadTime.ts` — MM/DD/YY format
+- `src/pages/Index.tsx` — new grid layout, compact modal
