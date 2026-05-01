@@ -10,8 +10,11 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
+  CheckCircle2,
+  Scan,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { analyzePaste } from "@/lib/pasteAnalyzer";
 
 type Cart = {
   subtotal: number;
@@ -30,21 +33,17 @@ const num = (s: string): number => {
 
 const parseCart = (raw: string): Cart => {
   const lines = raw.split(/\r?\n/);
-  let subtotal = 0,
-    tax = 0,
-    freight = 0,
-    total = 0;
+  let subtotal = 0, tax = 0, freight = 0, total = 0;
   for (const line of lines) {
     const l = line.toLowerCase().trim();
     if (!l) continue;
-    // Order matters: check subtotal before total (since "subtotal" contains "total")
     if (/\b(sub\s*t(o(t(a(l)?)?)?)?|subt|sub-?total)\b/.test(l)) {
       subtotal = num(line);
     } else if (/\b(tax|tx|impuesto|iva)\b/.test(l)) {
       tax = num(line);
     } else if (/\b(freight|frt|frgh|shipping|ship|env[ií]o|flete)\b/.test(l)) {
       freight = num(line);
-    } else if (/\b(tot(a(l)?)?|grand\s*total|order\s*total|amount)\b/.test(l)) {
+    } else if (/\b(tot(al)?|grand\s*total|order\s*total|amount|tot\b)\b/i.test(l)) {
       total = num(line);
     }
   }
@@ -73,57 +72,32 @@ const CartInput = ({
     try {
       const text = await navigator.clipboard.readText();
       onChange(parseCart(text));
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   };
   const copyAmount = async () => {
     try {
       await navigator.clipboard.writeText(cart.total.toFixed(2));
-      toast({ title: "Copiado", description: `Order amount: $${cart.total.toFixed(2)}` });
+      toast({ title: "Copied", description: `Order amount: $${cart.total.toFixed(2)}` });
     } catch {
-      toast({ title: "Error al copiar", variant: "destructive" });
+      toast({ title: "Error copying", variant: "destructive" });
     }
   };
   return (
-    <div className="bg-black border border-yellow-500/40 rounded-xl p-2.5 flex flex-col gap-2">
+    <div className="bg-black border border-yellow-500/40 rounded-xl p-2 flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
-        <span
-          className="h-2 w-2 rounded-full"
-          style={{ background: `hsl(var(--${accent}))` }}
-        />
-        <span className="text-[11px] font-semibold text-yellow-400 font-mono uppercase tracking-wider">{label}</span>
+        <span className="h-2 w-2 rounded-full" style={{ background: `hsl(var(--${accent}))` }} />
+        <span className="text-[10px] font-semibold text-yellow-400 font-mono uppercase tracking-wider">{label}</span>
         <div className="ml-auto flex items-center gap-1">
           {showCopyAmount && cart.total > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
-              onClick={copyAmount}
-              title="Copiar order amount"
-            >
-              <Copy className="h-3 w-3 mr-1" />
-              Amount
+            <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10" onClick={copyAmount} title="Copy order amount">
+              <Copy className="h-2.5 w-2.5 mr-0.5" />Amt
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
-            onClick={paste}
-            title="Pegar desde portapapeles"
-          >
-            <ClipboardPaste className="h-3 w-3 mr-1" />
-            Pegar
+          <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10" onClick={paste} title="Paste from clipboard">
+            <ClipboardPaste className="h-2.5 w-2.5 mr-0.5" />Paste
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
-            onClick={() => onChange({ ...EMPTY })}
-            title="Limpiar"
-          >
-            <RotateCcw className="h-3 w-3" />
+          <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10" onClick={() => onChange({ ...EMPTY })} title="Clear">
+            <RotateCcw className="h-2.5 w-2.5" />
           </Button>
         </div>
       </div>
@@ -131,27 +105,22 @@ const CartInput = ({
       <textarea
         value={cart.raw}
         onChange={(e) => onChange(parseCart(e.target.value))}
-        placeholder={"Pega aquí el carrito\nSubtotal $...\nTax $...\nFreight $...\nTotal $..."}
-        className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-2 text-[11px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-20"
+        placeholder="Paste cart here..."
+        className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-1.5 text-[10px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-16"
       />
 
-      <div className="grid grid-cols-2 gap-1 text-[10px] font-mono">
-        <div className="flex justify-between bg-yellow-500/5 border border-yellow-500/20 rounded px-1.5 py-0.5">
-          <span className="text-yellow-600">SUB</span>
-          <span className="text-yellow-400">{fmt(cart.subtotal)}</span>
-        </div>
-        <div className="flex justify-between bg-yellow-500/5 border border-yellow-500/20 rounded px-1.5 py-0.5">
-          <span className="text-yellow-600">TAX</span>
-          <span className="text-yellow-400">{fmt(cart.tax)}</span>
-        </div>
-        <div className="flex justify-between bg-yellow-500/5 border border-yellow-500/20 rounded px-1.5 py-0.5">
-          <span className="text-yellow-600">FRT</span>
-          <span className="text-yellow-400">{fmt(cart.freight)}</span>
-        </div>
-        <div className="flex justify-between bg-yellow-500/10 border border-yellow-500/40 rounded px-1.5 py-0.5 font-semibold">
-          <span className="text-yellow-300">TOT</span>
-          <span className="text-yellow-300">{fmt(cart.total)}</span>
-        </div>
+      <div className="grid grid-cols-4 gap-1 text-[9px] font-mono">
+        {[
+          { k: "SUB", v: cart.subtotal },
+          { k: "TAX", v: cart.tax },
+          { k: "FRT", v: cart.freight },
+          { k: "TOT", v: cart.total },
+        ].map(({ k, v }) => (
+          <div key={k} className={`flex flex-col items-center rounded px-1 py-0.5 ${k === "TOT" ? "bg-yellow-500/10 border border-yellow-500/40" : "bg-yellow-500/5 border border-yellow-500/20"}`}>
+            <span className="text-yellow-600">{k}</span>
+            <span className={k === "TOT" ? "text-yellow-300 font-semibold" : "text-yellow-400"}>{fmt(v)}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -163,140 +132,92 @@ export const SplitOrderCalc = () => {
   const [splitB, setSplitB] = useState<Cart>({ ...EMPTY });
   const [showSplits, setShowSplits] = useState(false);
 
-  const sum = useMemo(
-    () => ({
-      subtotal: round2(splitA.subtotal + splitB.subtotal),
-      tax: round2(splitA.tax + splitB.tax),
-      freight: round2(splitA.freight + splitB.freight),
-      total: round2(splitA.total + splitB.total),
-    }),
-    [splitA, splitB]
-  );
+  const sum = useMemo(() => ({
+    subtotal: round2(splitA.subtotal + splitB.subtotal),
+    tax: round2(splitA.tax + splitB.tax),
+    freight: round2(splitA.freight + splitB.freight),
+    total: round2(splitA.total + splitB.total),
+  }), [splitA, splitB]);
 
-  const diff = useMemo(
-    () => ({
-      subtotal: round2(sum.subtotal - original.subtotal),
-      tax: round2(sum.tax - original.tax),
-      freight: round2(sum.freight - original.freight),
-      total: round2(sum.total - original.total),
-    }),
-    [sum, original]
-  );
+  const diff = useMemo(() => ({
+    subtotal: round2(sum.subtotal - original.subtotal),
+    tax: round2(sum.tax - original.tax),
+    freight: round2(sum.freight - original.freight),
+    total: round2(sum.total - original.total),
+  }), [sum, original]);
 
   const hasOriginal = original.total > 0 || original.subtotal > 0;
-  const hasSplits =
-    (splitA.total > 0 || splitA.subtotal > 0) &&
-    (splitB.total > 0 || splitB.subtotal > 0);
+  const hasSplits = (splitA.total > 0 || splitA.subtotal > 0) && (splitB.total > 0 || splitB.subtotal > 0);
   const showDiff = hasOriginal && hasSplits;
+  const allMatch = showDiff && Math.abs(diff.subtotal) < 0.01 && Math.abs(diff.tax) < 0.01 && Math.abs(diff.freight) < 0.01 && Math.abs(diff.total) < 0.01;
 
-  const Row = ({ label, value }: { label: string; value: number }) => {
+  const DiffRow = ({ label, value }: { label: string; value: number }) => {
     const ok = Math.abs(value) < 0.01;
-    const direction = value > 0 ? "incrementó" : value < 0 ? "disminuyó" : "match";
+    const dir = value > 0 ? "increased" : value < 0 ? "decreased" : "match";
     return (
-      <div
-        className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-[11px] ${
-          ok ? "bg-mint/10" : "bg-coral/10"
-        }`}
-      >
-        <div className="flex items-center gap-1.5">
-          {ok ? (
-            <Check className="h-3 w-3 text-mint" />
-          ) : (
-            <AlertTriangle className="h-3 w-3 text-coral" />
-          )}
-          <span>
-            {label} {ok ? "match" : direction}
-          </span>
+      <div className={`flex items-center justify-between rounded px-2 py-1 text-[10px] ${ok ? "bg-mint/10" : "bg-coral/10"}`}>
+        <div className="flex items-center gap-1">
+          {ok ? <Check className="h-3 w-3 text-mint" /> : <AlertTriangle className="h-3 w-3 text-coral" />}
+          <span>{label} {ok ? "match" : dir}</span>
         </div>
         <span className={`font-mono font-semibold ${ok ? "text-mint" : "text-coral"}`}>
-          {value > 0 ? "+" : ""}
-          {fmt(value)}
+          {value > 0 ? "+" : ""}{fmt(value)}
         </span>
       </div>
     );
   };
 
   return (
-    <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-8 w-8 rounded-xl bg-sky text-primary-foreground grid place-items-center">
-          <Split className="h-4 w-4" />
+    <Card className="surface-card p-3 flex flex-col h-full overflow-hidden">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="h-7 w-7 rounded-xl bg-sky text-primary-foreground grid place-items-center">
+          <Split className="h-3.5 w-3.5" />
         </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-xs font-semibold leading-tight truncate">
-            {showSplits ? "Split Order Calculator" : "Cart"}
-          </h3>
-          <p className="text-[9px] text-muted-foreground">
-            {showSplits ? "Main + Split A + Split B" : "Solo Main Cart · activa split para comparar"}
-          </p>
-        </div>
+        <h3 className="font-display text-xs font-semibold leading-tight truncate">
+          {showSplits ? "Split Order" : "Cart"}
+        </h3>
         <Button
           size="sm"
           variant={showSplits ? "default" : "secondary"}
-          className="h-7 rounded-full text-[10px] px-2.5"
+          className="ml-auto h-6 rounded-full text-[9px] px-2"
           onClick={() => setShowSplits((s) => !s)}
         >
-          {showSplits ? (
-            <>
-              <ChevronUp className="h-3 w-3 mr-1" /> Ocultar splits
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-3 w-3 mr-1" /> Split
-            </>
-          )}
+          {showSplits ? <><ChevronUp className="h-3 w-3 mr-0.5" />Hide</> : <><ChevronDown className="h-3 w-3 mr-0.5" />Split</>}
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2.5 pr-1">
-        <CartInput
-          label="Main Cart"
-          cart={original}
-          onChange={setOriginal}
-          accent="primary"
-          showCopyAmount
-        />
+      <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2 pr-1">
+        <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount />
 
         {showSplits && (
           <>
-            <CartInput
-              label="Cart A"
-              cart={splitA}
-              onChange={setSplitA}
-              accent="sky"
-              showCopyAmount
-            />
-            <CartInput
-              label="Cart B"
-              cart={splitB}
-              onChange={setSplitB}
-              accent="coral"
-              showCopyAmount
-            />
+            <CartInput label="Cart A" cart={splitA} onChange={setSplitA} accent="sky" showCopyAmount />
+            <CartInput label="Cart B" cart={splitB} onChange={setSplitB} accent="coral" showCopyAmount />
 
-            <div className="bg-gradient-charcoal text-primary-foreground rounded-xl p-3 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] opacity-80">
-                <span>Suma A + B</span>
-                <span className="font-mono">{fmt(sum.total)}</span>
-              </div>
-              <div className="flex items-center justify-between text-[10px] opacity-80">
-                <span>Main Cart</span>
-                <span className="font-mono">{fmt(original.total)}</span>
-              </div>
-              <div className="h-px bg-primary-foreground/20 my-1" />
-              {showDiff ? (
-                <div className="space-y-1">
-                  <Row label="Subtotal" value={diff.subtotal} />
-                  <Row label="Tax" value={diff.tax} />
-                  <Row label="Freight" value={diff.freight} />
-                  <Row label="Total" value={diff.total} />
+            {allMatch ? (
+              <div className="flex items-center justify-center gap-2 rounded-xl bg-mint/15 border border-mint/30 p-3">
+                <CheckCircle2 className="h-5 w-5 text-mint" />
+                <div>
+                  <div className="text-sm font-semibold text-mint">Totals Match</div>
+                  <div className="text-[10px] text-muted-foreground">All fields confirmed equal</div>
                 </div>
-              ) : (
-                <p className="text-[10px] opacity-70 text-center py-2">
-                  Pega Main + Cart A + Cart B para comparar
-                </p>
-              )}
-            </div>
+              </div>
+            ) : showDiff ? (
+              <div className="rounded-xl bg-secondary/60 p-2.5 space-y-1">
+                <div className="flex items-center justify-between text-[9px] text-muted-foreground mb-1">
+                  <span>A+B: {fmt(sum.total)}</span>
+                  <span>Main: {fmt(original.total)}</span>
+                </div>
+                <DiffRow label="Subtotal" value={diff.subtotal} />
+                <DiffRow label="Tax" value={diff.tax} />
+                <DiffRow label="Freight" value={diff.freight} />
+                <DiffRow label="Total" value={diff.total} />
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground text-center py-2">
+                Paste Main + Cart A + Cart B to compare
+              </p>
+            )}
           </>
         )}
       </div>
