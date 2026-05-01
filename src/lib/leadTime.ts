@@ -113,6 +113,23 @@ export const computeESD = (raw: string): { date: Date | null; label: string } =>
 const formatESD = (d: Date) => {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2);
   const wd = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][d.getDay()];
-  return `${wd} ${mm}/${dd}`;
+  return `${wd} ${mm}/${dd}/${yy}`;
+};
+
+/** Format date as MMDDYY (no slashes) for storage/copy */
+export const formatDateStorage = (d: Date) => {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${mm}${dd}${yy}`;
+};
+
+/** Format date as MM/DD/YY for display */
+export const formatDateDisplay = (d: Date) => {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${mm}/${dd}/${yy}`;
 };
