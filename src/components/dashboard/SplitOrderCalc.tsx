@@ -209,13 +209,15 @@ export const SplitOrderCalc = () => {
             ) : showDiff ? (
               <div className="rounded-xl bg-secondary/60 p-2.5 space-y-1">
                 <div className="flex items-center justify-between text-[9px] text-muted-foreground mb-1">
-                  <span>A+B: {fmt(sum.total)}</span>
-                  <span>Main: {fmt(original.total)}</span>
+                  <span>A+B Total: <span className="font-mono">{fmt(sum.total)}</span></span>
+                  <span>Main TOT: <span className="font-mono">{fmt(original.total)}</span></span>
                 </div>
-                <DiffRow label="Subtotal" value={diff.subtotal} />
-                <DiffRow label="Tax" value={diff.tax} />
-                <DiffRow label="Freight" value={diff.freight} />
-                <DiffRow label="Total" value={diff.total} />
+                {!totalOk && <DivergeRow label="TOTAL" value={diff.total} />}
+                <DivergeRow label="Tax" value={diff.tax} />
+                <DivergeRow label="Freight" value={diff.freight} />
+                {totalOk && taxOk && freightOk && (
+                  <div className="text-[10px] text-mint text-center font-mono">All match — confirmed</div>
+                )}
               </div>
             ) : (
               <p className="text-[10px] text-muted-foreground text-center py-2">
