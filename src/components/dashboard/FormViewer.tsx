@@ -37,7 +37,8 @@ export const FormViewer = forwardRef<
   //   load 1 = initial render
   //   load 2 = "Next" page (intermediate) -> NOT submit
   //   load 3 = final "/formResponse" thank-you page -> SUBMIT
-  // Cross-origin prevents reading the URL, so we use load count + min elapsed time.
+  // We trigger ONLY on load >= 3 with a min elapsed time, so partial Fraud-expanding
+  // re-renders or back nav do not falsely count.
   const handleIframeLoad = () => {
     loadCountRef.current += 1;
     if (loadCountRef.current === 1) {
@@ -45,12 +46,9 @@ export const FormViewer = forwardRef<
       return;
     }
     if (!autoDetect) return;
-    // Only treat as submit if it's the 3rd+ load OR enough time elapsed (real fill time).
     const elapsed = Date.now() - initialLoadAtRef.current;
-    if (loadCountRef.current >= 3 && elapsed > 8000) {
-      triggerSubmit();
-    } else if (elapsed > 25000) {
-      // Fallback: any reload after 25s is almost certainly a submit
+    // Strictly require 3+ loads AND ≥10s elapsed (real fill time).
+    if (loadCountRef.current >= 3 && elapsed > 10000) {
       triggerSubmit();
     }
   };
