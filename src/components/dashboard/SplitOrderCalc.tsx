@@ -149,18 +149,22 @@ export const SplitOrderCalc = () => {
   const hasOriginal = original.total > 0 || original.subtotal > 0;
   const hasSplits = (splitA.total > 0 || splitA.subtotal > 0) && (splitB.total > 0 || splitB.subtotal > 0);
   const showDiff = hasOriginal && hasSplits;
-  const allMatch = showDiff && Math.abs(diff.subtotal) < 0.01 && Math.abs(diff.tax) < 0.01 && Math.abs(diff.freight) < 0.01 && Math.abs(diff.total) < 0.01;
+  // Only validate that A+B totals match the main TOT (±$0.01). If not, show which line(s) diverged.
+  const totalOk = showDiff && Math.abs(diff.total) < 0.01;
+  const taxOk = Math.abs(diff.tax) < 0.01;
+  const freightOk = Math.abs(diff.freight) < 0.01;
+  const allMatch = showDiff && totalOk && taxOk && freightOk;
 
-  const DiffRow = ({ label, value }: { label: string; value: number }) => {
-    const ok = Math.abs(value) < 0.01;
-    const dir = value > 0 ? "increased" : value < 0 ? "decreased" : "match";
+  const DivergeRow = ({ label, value }: { label: string; value: number }) => {
+    if (Math.abs(value) < 0.01) return null;
+    const dir = value > 0 ? "increased" : "decreased";
     return (
-      <div className={`flex items-center justify-between rounded px-2 py-1 text-[10px] ${ok ? "bg-mint/10" : "bg-coral/10"}`}>
+      <div className="flex items-center justify-between rounded px-2 py-1 text-[10px] bg-coral/10">
         <div className="flex items-center gap-1">
-          {ok ? <Check className="h-3 w-3 text-mint" /> : <AlertTriangle className="h-3 w-3 text-coral" />}
-          <span>{label} {ok ? "match" : dir}</span>
+          <AlertTriangle className="h-3 w-3 text-coral" />
+          <span>{label} {dir} by</span>
         </div>
-        <span className={`font-mono font-semibold ${ok ? "text-mint" : "text-coral"}`}>
+        <span className="font-mono font-semibold text-coral">
           {value > 0 ? "+" : ""}{fmt(value)}
         </span>
       </div>
