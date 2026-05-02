@@ -69,18 +69,30 @@ export const FormViewer = forwardRef<
 
   return (
     <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         <div className="h-8 w-8 rounded-xl bg-primary text-primary-foreground grid place-items-center">
           <ClipboardList className="h-4 w-4" />
         </div>
-        <div>
+        <div className="min-w-0">
           <h3 className="font-display text-xs font-semibold leading-tight">Order Tracker</h3>
           <p className="text-[9px] text-muted-foreground">Detecta solo el Submit final</p>
         </div>
+        {url && onSubmitDetected && (
+          <Button
+            size="sm"
+            variant="default"
+            className="ml-auto h-7 bg-mint text-primary-foreground hover:brightness-110 font-semibold text-[11px] px-2.5"
+            onClick={triggerSubmit}
+            title="Mark order as counted"
+          >
+            <Check className="h-3.5 w-3.5 mr-1" />
+            Contar
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
-          className={`ml-auto h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
+          className={`h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
           onClick={() => setAutoDetect(!autoDetect)}
           title={autoDetect ? "Auto-detect ON" : "Auto-detect OFF"}
         >
