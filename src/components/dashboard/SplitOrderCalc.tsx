@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,6 +132,29 @@ export const SplitOrderCalc = () => {
   const [splitB, setSplitB] = useState<Cart>({ ...EMPTY });
   const [showSplits, setShowSplits] = useState(false);
 
+  // Consume analyzer's cart payload
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ subtotal?: number; tax?: number; freight?: number; total?: number }>;
+      const c = ce.detail || {};
+      const next: Cart = {
+        subtotal: c.subtotal ?? 0,
+        tax: c.tax ?? 0,
+        freight: c.freight ?? 0,
+        total: c.total ?? 0,
+        raw: `Subtotal: ${c.subtotal ?? 0}\nTax: ${c.tax ?? 0}\nFreight: ${c.freight ?? 0}\nTotal: ${c.total ?? 0}`,
+      };
+      setOriginal(next);
+    };
+    window.addEventListener("ecp:cart-fill", handler as EventListener);
+    return () => window.removeEventListener("ecp:cart-fill", handler as EventListener);
+  }, []);
+
+  // Notify when split opens (Calculator collapses on this event)
+  useEffect(() => {
+    if (showSplits) window.dispatchEvent(new CustomEvent("ecp:cart-split-open"));
+  }, [showSplits]);
+
   const sum = useMemo(() => ({
     subtotal: round2(splitA.subtotal + splitB.subtotal),
     tax: round2(splitA.tax + splitB.tax),
@@ -149,18 +172,22 @@ export const SplitOrderCalc = () => {
   const hasOriginal = original.total > 0 || original.subtotal > 0;
   const hasSplits = (splitA.total > 0 || splitA.subtotal > 0) && (splitB.total > 0 || splitB.subtotal > 0);
   const showDiff = hasOriginal && hasSplits;
-  const allMatch = showDiff && Math.abs(diff.subtotal) < 0.01 && Math.abs(diff.tax) < 0.01 && Math.abs(diff.freight) < 0.01 && Math.abs(diff.total) < 0.01;
+  // Only validate that A+B totals match the main TOT (±$0.01). If not, show which line(s) diverged.
+  const totalOk = showDiff && Math.abs(diff.total) < 0.01;
+  const taxOk = Math.abs(diff.tax) < 0.01;
+  const freightOk = Math.abs(diff.freight) < 0.01;
+  const allMatch = showDiff && totalOk && taxOk && freightOk;
 
-  const DiffRow = ({ label, value }: { label: string; value: number }) => {
-    const ok = Math.abs(value) < 0.01;
-    const dir = value > 0 ? "increased" : value < 0 ? "decreased" : "match";
+  const DivergeRow = ({ label, value }: { label: string; value: number }) => {
+    if (Math.abs(value) < 0.01) return null;
+    const dir = value > 0 ? "increased" : "decreased";
     return (
-      <div className={`flex items-center justify-between rounded px-2 py-1 text-[10px] ${ok ? "bg-mint/10" : "bg-coral/10"}`}>
+      <div className="flex items-center justify-between rounded px-2 py-1 text-[10px] bg-coral/10">
         <div className="flex items-center gap-1">
-          {ok ? <Check className="h-3 w-3 text-mint" /> : <AlertTriangle className="h-3 w-3 text-coral" />}
-          <span>{label} {ok ? "match" : dir}</span>
+          <AlertTriangle className="h-3 w-3 text-coral" />
+          <span>{label} {dir} by</span>
         </div>
-        <span className={`font-mono font-semibold ${ok ? "text-mint" : "text-coral"}`}>
+        <span className="font-mono font-semibold text-coral">
           {value > 0 ? "+" : ""}{fmt(value)}
         </span>
       </div>
@@ -205,13 +232,15 @@ export const SplitOrderCalc = () => {
             ) : showDiff ? (
               <div className="rounded-xl bg-secondary/60 p-2.5 space-y-1">
                 <div className="flex items-center justify-between text-[9px] text-muted-foreground mb-1">
-                  <span>A+B: {fmt(sum.total)}</span>
-                  <span>Main: {fmt(original.total)}</span>
+                  <span>A+B Total: <span className="font-mono">{fmt(sum.total)}</span></span>
+                  <span>Main TOT: <span className="font-mono">{fmt(original.total)}</span></span>
                 </div>
-                <DiffRow label="Subtotal" value={diff.subtotal} />
-                <DiffRow label="Tax" value={diff.tax} />
-                <DiffRow label="Freight" value={diff.freight} />
-                <DiffRow label="Total" value={diff.total} />
+                {!totalOk && <DivergeRow label="TOTAL" value={diff.total} />}
+                <DivergeRow label="Tax" value={diff.tax} />
+                <DivergeRow label="Freight" value={diff.freight} />
+                {totalOk && taxOk && freightOk && (
+                  <div className="text-[10px] text-mint text-center font-mono">All match — confirmed</div>
+                )}
               </div>
             ) : (
               <p className="text-[10px] text-muted-foreground text-center py-2">

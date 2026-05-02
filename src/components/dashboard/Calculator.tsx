@@ -93,6 +93,13 @@ export const Calculator = () => {
     } catch { /* ignore */ }
   };
 
+  // Auto-collapse when Cart Split opens
+  useEffect(() => {
+    const handler = () => setCollapsed(true);
+    window.addEventListener("ecp:cart-split-open", handler);
+    return () => window.removeEventListener("ecp:cart-split-open", handler);
+  }, []);
+
   useEffect(() => {
     if (discountMode || collapsed) return;
 
