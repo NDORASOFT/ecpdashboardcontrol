@@ -1,24 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ShippingProgress, vehicleFor } from "./ShippingProgress";
-
-const QUOTES = [
-  "Bonjour, courage — small steps, big day.",
-  "Doucement, but never stop. Keep typing.",
-  "C'est la vie — one PO at a time.",
-  "Allez, allez! Your goal is closer than it looks.",
-  "Petit à petit, l'oiseau fait son nid.",
-  "On y va — momentum beats perfection.",
-  "Chaque ordre compte. Every order counts.",
-  "Respire, focus, livre. Breathe, focus, deliver.",
-  "Vas-y, champion — finish strong.",
-  "La patience est amère, mais son fruit est doux.",
-];
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import type { DailyRecord, SubmissionLog } from "./HistoryTable";
 
 const moodFor = (pct: number) => {
   if (pct >= 1) return { face: "🤩", label: "Goal!", color: "hsl(var(--mint))" };
   if (pct >= 0.66) return { face: "😄", label: "Close", color: "hsl(var(--sun))" };
   return { face: "😟", label: "Push it", color: "hsl(var(--coral))" };
+};
+
+const WEEKLY_BONUS = 350; // weekly bonus threshold (configurable later)
+
+const useTips = (count: number, goal: number, weekTotal: number) => {
+  return useMemo(() => {
+    const remaining = Math.max(goal - count, 0);
+    const weekRemaining = Math.max(WEEKLY_BONUS - weekTotal, 0);
+    return [
+      "No olvides tu M-Note en los BO",
+      "Saca tus órdenes antes del Cut Out Time",
+      remaining > 0
+        ? `Estás a ${remaining} ${remaining === 1 ? "orden" : "órdenes"} de tu meta diaria`
+        : "Meta diaria alcanzada — ¡sigue!",
+      weekRemaining > 0
+        ? `Faltan ${weekRemaining} órdenes para tu bono semanal`
+        : "¡Bono semanal asegurado!",
+      "Split tus órdenes antes del Cut Out",
+      "Revisa BO/DS antes de hacer T-Note",
+      "PO arriba de $1500 → Crédito (UNC)",
+    ];
+  }, [count, goal, weekTotal]);
 };
 
 export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }) => {
@@ -29,20 +40,24 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const Icon = v.icon;
   const worried = pct < 0.7;
 
-  const [qIdx, setQIdx] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setQIdx((i) => (i + 1) % QUOTES.length), 8000);
-    return () => clearInterval(id);
-  }, []);
+  const [history] = useLocalStorage<DailyRecord[]>("ecp.history", []);
+  const weekTotal = useMemo(() => history.slice(0, 7).reduce((s, r) => s + r.count, 0), [history]);
 
-  const size = 90;
-  const stroke = 10;
+  const tips = useTips(count, goal, weekTotal);
+  const [tIdx, setTIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTIdx((i) => (i + 1) % tips.length), 8000);
+    return () => clearInterval(id);
+  }, [tips.length]);
+
+  const size = 80;
+  const stroke = 9;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
 
   return (
-    <Card className={`surface-card p-2.5 flex flex-col items-center gap-1.5 h-full overflow-hidden ${worried ? "ring-2 ring-coral/40" : ""}`}>
+    <Card className={`surface-card p-2.5 flex flex-col items-center gap-1.5 overflow-hidden ${worried ? "ring-2 ring-coral/40" : ""}`}>
       <p className="font-display text-[11px] font-semibold leading-tight">Daily Goal · {goal}</p>
 
       <div className="relative" style={{ width: size, height: size }}>
@@ -57,8 +72,8 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
         </svg>
         <div className="absolute inset-0 grid place-items-center">
           <div className="text-center leading-none">
-            <div className={`text-2xl ${worried ? "animate-worry" : "animate-float"}`}>{mood.face}</div>
-            <div className="font-display text-lg font-bold mt-0.5">{count}</div>
+            <div className={`text-xl ${worried ? "animate-worry" : "animate-float"}`}>{mood.face}</div>
+            <div className="font-display text-base font-bold mt-0.5">{count}</div>
           </div>
         </div>
       </div>
@@ -76,10 +91,10 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
           </span>
         </div>
         <div className="text-[9px] text-center mt-1 font-medium" style={{ color: v.color }}>
-          {remaining > 0 ? `${remaining} left` : "Goal reached! 🎉"}
+          {remaining > 0 ? `${remaining} left · Wk ${weekTotal}/${WEEKLY_BONUS}` : `Goal! · Wk ${weekTotal}/${WEEKLY_BONUS}`}
         </div>
-        <div key={qIdx} className={`text-[8px] text-center mt-0.5 italic text-muted-foreground leading-tight ${worried ? "text-coral animate-pulse-soft" : ""}`}>
-          "{QUOTES[qIdx]}"
+        <div key={tIdx} className={`text-[9px] text-center mt-1 leading-tight font-medium ${worried ? "text-coral animate-pulse-soft" : "text-foreground/80"}`}>
+          💡 {tips[tIdx]}
         </div>
       </div>
     </Card>
