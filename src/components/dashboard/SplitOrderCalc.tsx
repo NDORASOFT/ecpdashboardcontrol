@@ -132,6 +132,29 @@ export const SplitOrderCalc = () => {
   const [splitB, setSplitB] = useState<Cart>({ ...EMPTY });
   const [showSplits, setShowSplits] = useState(false);
 
+  // Consume analyzer's cart payload
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ subtotal?: number; tax?: number; freight?: number; total?: number }>;
+      const c = ce.detail || {};
+      const next: Cart = {
+        subtotal: c.subtotal ?? 0,
+        tax: c.tax ?? 0,
+        freight: c.freight ?? 0,
+        total: c.total ?? 0,
+        raw: `Subtotal: ${c.subtotal ?? 0}\nTax: ${c.tax ?? 0}\nFreight: ${c.freight ?? 0}\nTotal: ${c.total ?? 0}`,
+      };
+      setOriginal(next);
+    };
+    window.addEventListener("ecp:cart-fill", handler as EventListener);
+    return () => window.removeEventListener("ecp:cart-fill", handler as EventListener);
+  }, []);
+
+  // Notify when split opens (Calculator collapses on this event)
+  useEffect(() => {
+    if (showSplits) window.dispatchEvent(new CustomEvent("ecp:cart-split-open"));
+  }, [showSplits]);
+
   const sum = useMemo(() => ({
     subtotal: round2(splitA.subtotal + splitB.subtotal),
     tax: round2(splitA.tax + splitB.tax),
