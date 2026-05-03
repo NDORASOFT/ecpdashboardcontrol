@@ -443,11 +443,11 @@ export const Notepad = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2.5 pr-1">
+            <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2 pr-1">
               {activeTNotes.map((t) => {
                 const poLabel = t.poNumber || t.mscItem || "new";
                 return (
-                  <div key={t.id} className="bg-black border border-yellow-500/40 rounded-xl p-2.5 space-y-1.5">
+                  <div key={t.id} className="bg-black border border-yellow-500/40 rounded-xl p-2 space-y-1">
                     <div className="flex items-center justify-between gap-2 pb-1 border-b border-yellow-500/30">
                       <span className="text-[9px] uppercase tracking-wide text-yellow-500 font-mono font-semibold">
                         PO# · {poLabel.toString().slice(0, 16)}
