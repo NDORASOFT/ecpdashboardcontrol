@@ -1,11 +1,47 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Truck, ClipboardPaste, Scan } from "lucide-react";
+import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Truck, ClipboardPaste, Scan, ChevronDown, ChevronUp } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 import { computeESD } from "@/lib/leadTime";
 import { analyzePaste } from "@/lib/pasteAnalyzer";
+import { Analyzer } from "./Analyzer";
+
+// PO# input: keeps local state while typing; only commits on blur/Enter
+// so the sidebar group list doesn't update on every keystroke.
+const PoNumberInput = ({
+  value,
+  onCommit,
+  className,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  className?: string;
+}) => {
+  const [local, setLocal] = useState(value);
+  const lastExternal = useRef(value);
+  useEffect(() => {
+    if (value !== lastExternal.current) {
+      lastExternal.current = value;
+      setLocal(value);
+    }
+  }, [value]);
+  const commit = () => {
+    const upper = local.toUpperCase();
+    setLocal(upper);
+    if (upper !== value) onCommit(upper);
+  };
+  return (
+    <input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+      className={className}
+    />
+  );
+};
 
 type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
