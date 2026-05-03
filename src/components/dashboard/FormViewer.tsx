@@ -141,6 +141,57 @@ export const FormViewer = forwardRef<
         )}
       </div>
 
+      {setPoCount && setCount && setOtherCount && onResetCounter && (
+        <div className="flex items-center gap-1.5 mb-2 px-1 py-1.5 rounded-lg bg-secondary/40">
+          <button
+            onClick={() => { setPoCount(Math.max(0, poCount - 1)); setCount(Math.max(0, count - 1)); }}
+            className="h-6 w-6 grid place-items-center rounded-md bg-secondary hover:bg-muted"
+            title="PO -1"
+          >
+            <Minus className="h-3 w-3" />
+          </button>
+          <div className="flex flex-col items-center px-1">
+            <span className="font-display text-base font-bold tabular-nums leading-none">{poCount}</span>
+            <span className="text-[8px] text-muted-foreground uppercase">PO</span>
+          </div>
+          <button
+            onClick={() => { setPoCount(poCount + 1); setCount(count + 1); }}
+            className="h-6 w-6 grid place-items-center rounded-md bg-primary text-primary-foreground hover:brightness-110"
+            title="PO +1"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+          <div className="mx-1 h-6 w-px bg-border/60" />
+          <button
+            onClick={() => { setOtherCount(Math.max(0, otherCount - 1)); setCount(Math.max(0, count - 1)); }}
+            className="h-5 w-5 grid place-items-center rounded-md bg-secondary hover:bg-muted text-muted-foreground"
+          >
+            <Minus className="h-2.5 w-2.5" />
+          </button>
+          <div className="flex flex-col items-center px-0.5">
+            <span className="text-sm font-semibold tabular-nums leading-none">{otherCount}</span>
+            <span className="text-[8px] text-muted-foreground uppercase">76</span>
+          </div>
+          <button
+            onClick={() => { setOtherCount(otherCount + 1); setCount(count + 1); }}
+            className="h-5 w-5 grid place-items-center rounded-md bg-secondary hover:bg-muted text-muted-foreground"
+          >
+            <Plus className="h-2.5 w-2.5" />
+          </button>
+          <div className="ml-auto flex flex-col items-center px-1">
+            <span className="text-sm font-semibold tabular-nums leading-none">{count}</span>
+            <span className="text-[8px] text-muted-foreground uppercase">Tot</span>
+          </div>
+          <button
+            onClick={onResetCounter}
+            className="h-6 w-6 grid place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="Reset counters"
+          >
+            <RotateCcw className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
       {(!url || editing) && (
         <div className="flex gap-2 mb-3">
           <Input
