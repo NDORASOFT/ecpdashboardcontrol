@@ -122,9 +122,16 @@ const Index = () => {
     ].slice(0, 500));
 
     if (type !== "Cancel order") {
-      setCount(count + 1);
-      if (type === "PO regular") setPoCount(poCount + 1);
-      else setOtherCount(otherCount + 1);
+      // 76 Screen does NOT count toward the daily goal `count`.
+      if (type === "PO regular") {
+        setPoCount(poCount + 1);
+        setCount(count + 1);
+      } else if (type === "76 Screen") {
+        setOtherCount(otherCount + 1);
+      } else {
+        setOtherCount(otherCount + 1);
+        setCount(count + 1);
+      }
     }
     setAskType(false);
     setShowFraud(false);
@@ -162,19 +169,24 @@ const Index = () => {
       </header>
 
       <main className="max-w-[1500px] mx-auto flex flex-wrap gap-3 items-start">
-        {/* Col 1: PO# Notes — only column allowed to grow vertically */}
-        <div className="w-full md:w-[24rem] md:flex-shrink-0 min-h-[600px] flex">
+        {/* Col 1: PO# Notes — vertical business-card width, tall */}
+        <div className="w-full md:w-[20rem] md:flex-shrink-0 self-start h-[640px] flex">
           <Notepad />
         </div>
 
-        {/* Col 2: Calculator + Cart — fixed width, hugs content */}
-        <div className="w-full md:w-[13.5rem] md:flex-shrink-0 self-start flex flex-col gap-3">
+        {/* Col 2: Calculator + Cart + VendorVault stacked (BC width) */}
+        <div className="w-full md:w-[22rem] md:flex-shrink-0 self-start flex flex-col gap-3">
           <Calculator />
-          <SplitOrderCalc />
+          <div className="h-[18rem] flex">
+            <SplitOrderCalc />
+          </div>
+          <div className="h-[20rem] flex">
+            <VendorVault />
+          </div>
         </div>
 
-        {/* Col 3: Order Tracker (Counter merged into FormViewer) */}
-        <div className="w-full md:w-[22rem] md:flex-shrink-0 self-start min-h-[560px] flex">
+        {/* Col 3: Order Tracker (BC + 20%, tall) */}
+        <div className="w-full md:w-[26rem] md:flex-shrink-0 self-start h-[640px] flex">
           <FormViewer
             ref={formRef}
             onSubmitDetected={handleSubmitDetected}
@@ -185,18 +197,9 @@ const Index = () => {
           />
         </div>
 
-        {/* Col 4: Goal + Podium — fixed width, hugs content */}
-        <div className="w-full md:w-[13rem] md:flex-shrink-0 self-start flex flex-col gap-3">
+        {/* Col 4: Goal (vertical BC) */}
+        <div className="w-full md:w-[14rem] md:flex-shrink-0 self-start flex flex-col gap-3">
           <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
-          <Podium />
-        </div>
-
-        {/* Bottom row: VendorVault + Analyzer */}
-        <div className="w-full md:flex-1 md:min-w-[28rem] min-h-[350px]">
-          <VendorVault />
-        </div>
-        <div className="w-full md:w-[22rem] md:flex-shrink-0 min-h-[350px]">
-          <Analyzer />
         </div>
       </main>
 
