@@ -124,6 +124,7 @@ export const Notepad = () => {
   const [activePO, setActivePO] = useLocalStorage<string>("ecp.activePO", "");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pendingNetPrice, setPendingNetPrice] = useState<string | null>(null);
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
 
   // PO# groups: list of unique PO#s (blank goes under "NEW")
   const poGroups = useMemo(() => {
