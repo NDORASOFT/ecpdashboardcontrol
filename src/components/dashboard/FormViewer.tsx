@@ -1,16 +1,23 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check, Plus, Minus, RotateCcw } from "lucide-react";
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export type FormViewerHandle = { reload: () => void };
 
+type CounterProps = {
+  count: number; setCount: (n: number) => void;
+  poCount: number; setPoCount: (n: number) => void;
+  otherCount: number; setOtherCount: (n: number) => void;
+  onResetCounter: () => void;
+};
+
 export const FormViewer = forwardRef<
   FormViewerHandle,
-  { onSubmitDetected?: () => void }
->(({ onSubmitDetected }, ref) => {
+  { onSubmitDetected?: () => void } & Partial<CounterProps>
+>(({ onSubmitDetected, count = 0, setCount, poCount = 0, setPoCount, otherCount = 0, setOtherCount, onResetCounter }, ref) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", true);
   const [draft, setDraft] = useState(url);
