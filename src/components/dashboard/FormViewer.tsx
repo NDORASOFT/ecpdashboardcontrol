@@ -1,16 +1,23 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check, Plus, Minus, RotateCcw } from "lucide-react";
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export type FormViewerHandle = { reload: () => void };
 
+type CounterProps = {
+  count: number; setCount: (n: number) => void;
+  poCount: number; setPoCount: (n: number) => void;
+  otherCount: number; setOtherCount: (n: number) => void;
+  onResetCounter: () => void;
+};
+
 export const FormViewer = forwardRef<
   FormViewerHandle,
-  { onSubmitDetected?: () => void }
->(({ onSubmitDetected }, ref) => {
+  { onSubmitDetected?: () => void } & Partial<CounterProps>
+>(({ onSubmitDetected, count = 0, setCount, poCount = 0, setPoCount, otherCount = 0, setOtherCount, onResetCounter }, ref) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", true);
   const [draft, setDraft] = useState(url);
@@ -75,7 +82,7 @@ export const FormViewer = forwardRef<
         </div>
         <div className="min-w-0">
           <h3 className="font-display text-xs font-semibold leading-tight">Order Tracker</h3>
-          <p className="text-[9px] text-muted-foreground">Detecta solo el Submit final</p>
+          <p className="text-[9px] text-muted-foreground">Counter + Form</p>
         </div>
         {url && onSubmitDetected && (
           <Button
@@ -133,6 +140,57 @@ export const FormViewer = forwardRef<
           </>
         )}
       </div>
+
+      {setPoCount && setCount && setOtherCount && onResetCounter && (
+        <div className="flex items-center gap-1.5 mb-2 px-1 py-1.5 rounded-lg bg-secondary/40">
+          <button
+            onClick={() => { setPoCount(Math.max(0, poCount - 1)); setCount(Math.max(0, count - 1)); }}
+            className="h-6 w-6 grid place-items-center rounded-md bg-secondary hover:bg-muted"
+            title="PO -1"
+          >
+            <Minus className="h-3 w-3" />
+          </button>
+          <div className="flex flex-col items-center px-1">
+            <span className="font-display text-base font-bold tabular-nums leading-none">{poCount}</span>
+            <span className="text-[8px] text-muted-foreground uppercase">PO</span>
+          </div>
+          <button
+            onClick={() => { setPoCount(poCount + 1); setCount(count + 1); }}
+            className="h-6 w-6 grid place-items-center rounded-md bg-primary text-primary-foreground hover:brightness-110"
+            title="PO +1"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+          <div className="mx-1 h-6 w-px bg-border/60" />
+          <button
+            onClick={() => { setOtherCount(Math.max(0, otherCount - 1)); setCount(Math.max(0, count - 1)); }}
+            className="h-5 w-5 grid place-items-center rounded-md bg-secondary hover:bg-muted text-muted-foreground"
+          >
+            <Minus className="h-2.5 w-2.5" />
+          </button>
+          <div className="flex flex-col items-center px-0.5">
+            <span className="text-sm font-semibold tabular-nums leading-none">{otherCount}</span>
+            <span className="text-[8px] text-muted-foreground uppercase">76</span>
+          </div>
+          <button
+            onClick={() => { setOtherCount(otherCount + 1); setCount(count + 1); }}
+            className="h-5 w-5 grid place-items-center rounded-md bg-secondary hover:bg-muted text-muted-foreground"
+          >
+            <Plus className="h-2.5 w-2.5" />
+          </button>
+          <div className="ml-auto flex flex-col items-center px-1">
+            <span className="text-sm font-semibold tabular-nums leading-none">{count}</span>
+            <span className="text-[8px] text-muted-foreground uppercase">Tot</span>
+          </div>
+          <button
+            onClick={onResetCounter}
+            className="h-6 w-6 grid place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="Reset counters"
+          >
+            <RotateCcw className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       {(!url || editing) && (
         <div className="flex gap-2 mb-3">

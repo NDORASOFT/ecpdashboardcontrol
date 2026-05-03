@@ -3,7 +3,7 @@ import { Calculator } from "@/components/dashboard/Calculator";
 import { Notepad } from "@/components/dashboard/Notepad";
 import { SplitOrderCalc } from "@/components/dashboard/SplitOrderCalc";
 import { FormViewer, type FormViewerHandle } from "@/components/dashboard/FormViewer";
-import { OrderCounter } from "@/components/dashboard/OrderCounter";
+
 import { GoalHistoryToggle } from "@/components/dashboard/GoalHistoryToggle";
 import { VendorVault } from "@/components/dashboard/VendorVault";
 import { Analyzer } from "@/components/dashboard/Analyzer";
@@ -163,48 +163,41 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-[1500px] mx-auto grid grid-cols-12 gap-3 auto-rows-[minmax(0,_auto)]">
-        {/* Col 1: PO# Notes (tall, primary) */}
-        <div className="col-span-12 md:col-span-4 min-h-[600px]">
+      <main className="max-w-[1500px] mx-auto flex flex-wrap gap-3 items-start">
+        {/* Col 1: PO# Notes — only column allowed to grow vertically */}
+        <div className="w-full md:w-[24rem] md:flex-shrink-0 min-h-[600px] flex">
           <Notepad />
         </div>
 
-        {/* Col 2: Calculator + Cart */}
-        <div className="col-span-12 md:col-span-3 flex flex-col gap-3 min-h-[600px]">
+        {/* Col 2: Calculator + Cart — fixed width, hugs content */}
+        <div className="w-full md:w-[13.5rem] md:flex-shrink-0 self-start flex flex-col gap-3">
           <Calculator />
-          <div className="flex-1 min-h-[300px]">
-            <SplitOrderCalc />
-          </div>
+          <SplitOrderCalc />
         </div>
 
-        {/* Col 3: PO Tracker (Counter + Form + History) */}
-        <div className="col-span-12 md:col-span-3 flex flex-col gap-3 min-h-[600px]">
-          <OrderCounter
+        {/* Col 3: Order Tracker (Counter merged into FormViewer) */}
+        <div className="w-full md:w-[22rem] md:flex-shrink-0 self-start min-h-[560px] flex">
+          <FormViewer
+            ref={formRef}
+            onSubmitDetected={handleSubmitDetected}
             count={count} setCount={setCount}
             poCount={poCount} setPoCount={setPoCount}
             otherCount={otherCount} setOtherCount={setOtherCount}
-            onReset={resetAll}
+            onResetCounter={resetAll}
           />
-          <div className="flex-1 min-h-[420px]">
-            <FormViewer ref={formRef} onSubmitDetected={handleSubmitDetected} />
-          </div>
         </div>
 
-        {/* Col 4: Goal + History + Podium */}
-        <div className="col-span-12 md:col-span-2 flex flex-col gap-3 min-h-[600px]">
-          <div className="max-h-[300px]">
-            <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
-          </div>
-          <div className="flex-1 min-h-[280px]">
-            <Podium />
-          </div>
+        {/* Col 4: Goal + Podium — fixed width, hugs content */}
+        <div className="w-full md:w-[13rem] md:flex-shrink-0 self-start flex flex-col gap-3">
+          <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
+          <Podium />
         </div>
 
         {/* Bottom row: VendorVault + Analyzer */}
-        <div className="col-span-12 md:col-span-7 min-h-[350px]">
+        <div className="w-full md:flex-1 md:min-w-[28rem] min-h-[350px]">
           <VendorVault />
         </div>
-        <div className="col-span-12 md:col-span-5 min-h-[350px]">
+        <div className="w-full md:w-[22rem] md:flex-shrink-0 min-h-[350px]">
           <Analyzer />
         </div>
       </main>
