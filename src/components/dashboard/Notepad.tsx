@@ -466,19 +466,33 @@ export const Notepad = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 rounded-full text-xs text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
-                  onClick={() => analyzeAndFill()}
-                  title="Paste & analyze clipboard"
+                  className="h-6 rounded-full text-[10px] px-2 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
+                  onClick={() => setShowAnalyzer((v) => !v)}
+                  title="Toggle analyzer"
                 >
-                  <Scan className="h-3.5 w-3.5 mr-1" />
-                  Analyze
+                  <Scan className="h-3 w-3 mr-0.5" />
+                  {showAnalyzer ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                 </Button>
-                <Button size="sm" variant="secondary" className="h-7 rounded-full text-xs" onClick={addTNote}>
-                  <Plus className="h-3.5 w-3.5" />
-                  Note
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 rounded-full text-[10px] px-2 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
+                  onClick={() => analyzeAndFill()}
+                  title="Paste clipboard"
+                >
+                  <ClipboardPaste className="h-3 w-3" />
+                </Button>
+                <Button size="sm" variant="secondary" className="h-6 rounded-full text-[10px] px-2" onClick={addTNote}>
+                  <Plus className="h-3 w-3" />
                 </Button>
               </div>
             </div>
+
+            {showAnalyzer && (
+              <div className="mb-2 max-h-[260px] overflow-hidden rounded-xl border border-yellow-500/30">
+                <Analyzer />
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2 pr-1">
               {activeTNotes.map((t) => {
