@@ -3,7 +3,7 @@ import { Calculator } from "@/components/dashboard/Calculator";
 import { Notepad } from "@/components/dashboard/Notepad";
 import { SplitOrderCalc } from "@/components/dashboard/SplitOrderCalc";
 import { FormViewer, type FormViewerHandle } from "@/components/dashboard/FormViewer";
-import { OrderCounter } from "@/components/dashboard/OrderCounter";
+
 import { GoalHistoryToggle } from "@/components/dashboard/GoalHistoryToggle";
 import { VendorVault } from "@/components/dashboard/VendorVault";
 import { Analyzer } from "@/components/dashboard/Analyzer";
