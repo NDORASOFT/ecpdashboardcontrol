@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { GoalGauge } from "./GoalGauge";
 import { HistoryTable } from "./HistoryTable";
-import { Target, History, BarChart3 } from "lucide-react";
-import { StatsView } from "./StatsView";
+import { Target, History } from "lucide-react";
 
 export const GoalHistoryToggle = ({
   count,
@@ -13,7 +12,7 @@ export const GoalHistoryToggle = ({
   goal: number;
   setTodayCount: (n: number) => void;
 }) => {
-  const [view, setView] = useState<"goal" | "history" | "stats">("goal");
+  const [view, setView] = useState<"goal" | "history">("goal");
 
   return (
     <div className="flex flex-col h-full gap-1.5">
@@ -21,7 +20,6 @@ export const GoalHistoryToggle = ({
         {([
           { key: "goal" as const, icon: Target, label: "Goal" },
           { key: "history" as const, icon: History, label: "Log" },
-          { key: "stats" as const, icon: BarChart3, label: "Stats" },
         ]).map(({ key, icon: Icon, label }) => (
           <button
             key={key}
@@ -37,10 +35,8 @@ export const GoalHistoryToggle = ({
       <div className="flex-1 min-h-0">
         {view === "goal" ? (
           <GoalGauge count={count} goal={goal} />
-        ) : view === "history" ? (
-          <HistoryTable todayCount={count} goal={goal} setTodayCount={setTodayCount} />
         ) : (
-          <StatsView />
+          <HistoryTable todayCount={count} goal={goal} setTodayCount={setTodayCount} />
         )}
       </div>
     </div>

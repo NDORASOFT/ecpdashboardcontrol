@@ -1,11 +1,47 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Truck, ClipboardPaste, Scan } from "lucide-react";
+import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Truck, ClipboardPaste, Scan, ChevronDown, ChevronUp } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 import { computeESD } from "@/lib/leadTime";
 import { analyzePaste } from "@/lib/pasteAnalyzer";
+import { Analyzer } from "./Analyzer";
+
+// PO# input: keeps local state while typing; only commits on blur/Enter
+// so the sidebar group list doesn't update on every keystroke.
+const PoNumberInput = ({
+  value,
+  onCommit,
+  className,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  className?: string;
+}) => {
+  const [local, setLocal] = useState(value);
+  const lastExternal = useRef(value);
+  useEffect(() => {
+    if (value !== lastExternal.current) {
+      lastExternal.current = value;
+      setLocal(value);
+    }
+  }, [value]);
+  const commit = () => {
+    const upper = local.toUpperCase();
+    setLocal(upper);
+    if (upper !== value) onCommit(upper);
+  };
+  return (
+    <input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+      className={className}
+    />
+  );
+};
 
 type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
@@ -88,6 +124,7 @@ export const Notepad = () => {
   const [activePO, setActivePO] = useLocalStorage<string>("ecp.activePO", "");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pendingNetPrice, setPendingNetPrice] = useState<string | null>(null);
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
 
   // PO# groups: list of unique PO#s (blank goes under "NEW")
   const poGroups = useMemo(() => {
@@ -429,19 +466,33 @@ export const Notepad = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 rounded-full text-xs text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
-                  onClick={() => analyzeAndFill()}
-                  title="Paste & analyze clipboard"
+                  className="h-6 rounded-full text-[10px] px-2 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
+                  onClick={() => setShowAnalyzer((v) => !v)}
+                  title="Toggle analyzer"
                 >
-                  <Scan className="h-3.5 w-3.5 mr-1" />
-                  Analyze
+                  <Scan className="h-3 w-3 mr-0.5" />
+                  {showAnalyzer ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                 </Button>
-                <Button size="sm" variant="secondary" className="h-7 rounded-full text-xs" onClick={addTNote}>
-                  <Plus className="h-3.5 w-3.5" />
-                  Note
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 rounded-full text-[10px] px-2 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10"
+                  onClick={() => analyzeAndFill()}
+                  title="Paste clipboard"
+                >
+                  <ClipboardPaste className="h-3 w-3" />
+                </Button>
+                <Button size="sm" variant="secondary" className="h-6 rounded-full text-[10px] px-2" onClick={addTNote}>
+                  <Plus className="h-3 w-3" />
                 </Button>
               </div>
             </div>
+
+            {showAnalyzer && (
+              <div className="mb-2 max-h-[260px] overflow-hidden rounded-xl border border-yellow-500/30">
+                <Analyzer />
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2 pr-1">
               {activeTNotes.map((t) => {
@@ -485,30 +536,42 @@ export const Notepad = () => {
                         const esd = isLead ? computeESD((t.leapTime as string) || "") : null;
                         const isMoney = MONEY_FIELDS.has(f.key);
                         const rawVal = (t[f.key] as string) ?? "";
+                        const isPo = f.key === "poNumber";
                         return (
                           <div key={f.key}>
                             <div className="flex items-baseline gap-1.5 flex-wrap">
                               <label className="text-[10px] text-yellow-600 font-mono whitespace-nowrap shrink-0">
                                 {f.label}:
                               </label>
-                              <input
-                                value={rawVal}
-                                onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
-                                onBlur={(e) => handleBlur(t.id, f.key, e.target.value)}
-                                onKeyUp={(e) => handleKeyUp(t.id, f.key, e)}
-                                onKeyDown={(e) => {
-                                  if (showPasteHint && e.key === "Tab") {
-                                    e.preventDefault();
-                                    applyPendingNetPrice();
-                                  }
-                                }}
-                                placeholder={showPasteHint ? `Tab ↹ paste $${pendingNetPrice}` : isMoney ? "$0.00" : ""}
-                                className={`flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 ${
-                                  showPasteHint
-                                    ? "text-yellow-500/40 placeholder:text-yellow-500/50 italic"
-                                    : "text-yellow-300"
-                                }`}
-                              />
+                              {isPo ? (
+                                <PoNumberInput
+                                  value={rawVal}
+                                  onCommit={(v) => {
+                                    updateTNote(t.id, { poNumber: v });
+                                    if (v && v !== activePO) setActivePO(v);
+                                  }}
+                                  className="flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 text-yellow-300"
+                                />
+                              ) : (
+                                <input
+                                  value={rawVal}
+                                  onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
+                                  onBlur={(e) => handleBlur(t.id, f.key, e.target.value)}
+                                  onKeyUp={(e) => handleKeyUp(t.id, f.key, e)}
+                                  onKeyDown={(e) => {
+                                    if (showPasteHint && e.key === "Tab") {
+                                      e.preventDefault();
+                                      applyPendingNetPrice();
+                                    }
+                                  }}
+                                  placeholder={showPasteHint ? `Tab ↹ paste $${pendingNetPrice}` : isMoney ? "$0.00" : ""}
+                                  className={`flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 ${
+                                    showPasteHint
+                                      ? "text-yellow-500/40 placeholder:text-yellow-500/50 italic"
+                                      : "text-yellow-300"
+                                  }`}
+                                />
+                              )}
                               {showPasteHint && (
                                 <button
                                   onClick={applyPendingNetPrice}

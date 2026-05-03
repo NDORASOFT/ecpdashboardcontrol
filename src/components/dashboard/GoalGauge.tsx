@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ShippingProgress, vehicleFor } from "./ShippingProgress";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Pencil, Check } from "lucide-react";
 import type { DailyRecord, SubmissionLog } from "./HistoryTable";
 
 const moodFor = (pct: number) => {
@@ -10,29 +11,22 @@ const moodFor = (pct: number) => {
   return { face: "😟", label: "Push it", color: "hsl(var(--coral))" };
 };
 
-const WEEKLY_BONUS = 350; // weekly bonus threshold (configurable later)
+const WEEKLY_BONUS = 350;
 
-const useTips = (count: number, goal: number, weekTotal: number) => {
-  return useMemo(() => {
-    const remaining = Math.max(goal - count, 0);
-    const weekRemaining = Math.max(WEEKLY_BONUS - weekTotal, 0);
-    return [
-      "No olvides tu M-Note en los BO",
-      "Saca tus órdenes antes del Cut Out Time",
-      remaining > 0
-        ? `Estás a ${remaining} ${remaining === 1 ? "orden" : "órdenes"} de tu meta diaria`
-        : "Meta diaria alcanzada — ¡sigue!",
-      weekRemaining > 0
-        ? `Faltan ${weekRemaining} órdenes para tu bono semanal`
-        : "¡Bono semanal asegurado!",
-      "Split tus órdenes antes del Cut Out",
-      "Revisa BO/DS antes de hacer T-Note",
-      "PO arriba de $1500 → Crédito (UNC)",
-    ];
-  }, [count, goal, weekTotal]);
-};
+export const GoalGauge = ({
+  count,
+  goal: goalProp = 70,
+  onGoalChange,
+}: {
+  count: number;
+  goal?: number;
+  onGoalChange?: (g: number) => void;
+}) => {
+  const [storedGoal, setStoredGoal] = useLocalStorage<number>("ecp.goal", goalProp);
+  const goal = storedGoal || goalProp;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(goal));
 
-export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }) => {
   const pct = Math.min(count / goal, 1);
   const remaining = Math.max(goal - count, 0);
   const mood = moodFor(pct);
@@ -41,14 +35,9 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const worried = pct < 0.7;
 
   const [history] = useLocalStorage<DailyRecord[]>("ecp.history", []);
+  const [logs] = useLocalStorage<SubmissionLog[]>("ecp.submissions", []);
   const weekTotal = useMemo(() => history.slice(0, 7).reduce((s, r) => s + r.count, 0), [history]);
-
-  const tips = useTips(count, goal, weekTotal);
-  const [tIdx, setTIdx] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTIdx((i) => (i + 1) % tips.length), 8000);
-    return () => clearInterval(id);
-  }, [tips.length]);
+  const last5 = logs.slice(0, 5);
 
   const size = 80;
   const stroke = 9;
@@ -56,9 +45,38 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
   const c = 2 * Math.PI * r;
   const dash = c * pct;
 
+  const commitGoal = () => {
+    const n = Math.max(1, parseInt(draft, 10) || goal);
+    setStoredGoal(n);
+    onGoalChange?.(n);
+    setEditing(false);
+  };
+
   return (
     <Card className={`surface-card p-2.5 flex flex-col items-center gap-1.5 overflow-hidden ${worried ? "ring-2 ring-coral/40" : ""}`}>
-      <p className="font-display text-[11px] font-semibold leading-tight">Daily Goal · {goal}</p>
+      <div className="flex items-center gap-1">
+        <p className="font-display text-[11px] font-semibold leading-tight">Daily Goal ·</p>
+        {editing ? (
+          <div className="flex items-center gap-0.5">
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commitGoal}
+              onKeyDown={(e) => { if (e.key === "Enter") commitGoal(); }}
+              className="w-10 h-5 text-[11px] bg-secondary rounded px-1 text-center"
+            />
+            <Check className="h-3 w-3 text-mint cursor-pointer" onClick={commitGoal} />
+          </div>
+        ) : (
+          <button
+            onClick={() => { setDraft(String(goal)); setEditing(true); }}
+            className="flex items-center gap-0.5 text-[11px] font-bold hover:text-accent"
+          >
+            {goal} <Pencil className="h-2.5 w-2.5 opacity-60" />
+          </button>
+        )}
+      </div>
 
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
@@ -93,8 +111,30 @@ export const GoalGauge = ({ count, goal = 70 }: { count: number; goal?: number }
         <div className="text-[9px] text-center mt-1 font-medium" style={{ color: v.color }}>
           {remaining > 0 ? `${remaining} left · Wk ${weekTotal}/${WEEKLY_BONUS}` : `Goal! · Wk ${weekTotal}/${WEEKLY_BONUS}`}
         </div>
-        <div key={tIdx} className={`text-[9px] text-center mt-1 leading-tight font-medium ${worried ? "text-coral animate-pulse-soft" : "text-foreground/80"}`}>
-          💡 {tips[tIdx]}
+      </div>
+
+      {/* Last 5 mini history */}
+      <div className="w-full mt-1 border-t border-border/40 pt-1.5">
+        <div className="text-[9px] text-muted-foreground font-mono mb-1">Last 5</div>
+        <div className="space-y-0.5 overflow-x-auto scrollbar-thin">
+          {last5.length === 0 ? (
+            <div className="text-[9px] text-muted-foreground/60 text-center py-1">No orders yet</div>
+          ) : (
+            last5.map((s) => (
+              <div key={s.id} className="flex items-center gap-1 text-[9px] font-mono whitespace-nowrap">
+                <span className="truncate max-w-[60px] text-yellow-500">{s.poNumber || "—"}</span>
+                <span className={`px-1 rounded text-[8px] ${
+                  s.type === "PO regular" ? "bg-primary/20 text-primary" :
+                  s.type === "76 Screen" ? "bg-muted text-muted-foreground" :
+                  s.type === "Cancel order" ? "bg-coral/20 text-coral" :
+                  "bg-secondary text-foreground"
+                }`}>
+                  {s.type === "PO regular" ? "PO" : s.type === "76 Screen" ? "76" : s.type === "Cancel order" ? "X" : "OT"}
+                </span>
+                <span className="ml-auto tabular-nums">${s.amount.toFixed(0)}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </Card>
