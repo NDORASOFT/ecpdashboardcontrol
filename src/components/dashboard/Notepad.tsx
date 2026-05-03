@@ -115,7 +115,8 @@ export const Notepad = () => {
     [tnotes, activePO]
   );
 
-  // Ensure ONE empty note exists at the top of the active group (and only one)
+  // Ensure at least one note exists in the active group. Do NOT auto-prepend
+  // empties on every render — only when the group is completely empty.
   useEffect(() => {
     if (mode !== "tnotes") return;
     if (tnotes.length === 0) {
@@ -123,18 +124,13 @@ export const Notepad = () => {
       return;
     }
     const groupNotes = tnotes.filter((t) => (t.poNumber || "") === activePO);
+    if (groupNotes.length === 0) {
+      setTnotes([emptyTNote(activePO), ...tnotes]);
+      return;
+    }
+    // Dedupe: keep only ONE empty per group
     const emptyOnes = groupNotes.filter(isEmptyTNote);
-
-    if (emptyOnes.length === 0) {
-      // No empty in this group — prepend one
-      const newEmpty = emptyTNote(activePO);
-      // Insert before the first note of the active group
-      const firstIdx = tnotes.findIndex((t) => (t.poNumber || "") === activePO);
-      const next = [...tnotes];
-      next.splice(firstIdx === -1 ? 0 : firstIdx, 0, newEmpty);
-      setTnotes(next);
-    } else if (emptyOnes.length > 1) {
-      // Dedupe — keep only the first
+    if (emptyOnes.length > 1) {
       const keepId = emptyOnes[0].id;
       setTnotes(tnotes.filter((t) => !(isEmptyTNote(t) && (t.poNumber || "") === activePO && t.id !== keepId)));
     }
@@ -199,11 +195,8 @@ export const Notepad = () => {
 
   const updateTNote = (id: string, patch: Partial<TNote>) => {
     setTnotes(tnotes.map((t) => (t.id === id ? { ...t, ...patch } : t)));
-    // If poNumber was updated, switch active group
-    if (patch.poNumber !== undefined) {
-      const newPo = patch.poNumber.toUpperCase();
-      if (newPo && newPo !== activePO) setActivePO(newPo);
-    }
+    // NOTE: do NOT switch activePO here. PO# group switching happens on blur
+    // (handleBlur) so we don't create a new sidebar tab on every keystroke.
   };
 
   const removeTNote = (id: string) => setTnotes(tnotes.filter((t) => t.id !== id));
@@ -242,10 +235,14 @@ export const Notepad = () => {
     }
   };
 
-  // Uppercase on blur
+  // Uppercase on blur (and commit PO# group switch only on blur of poNumber)
   const handleBlur = (id: string, key: keyof TNote, value: string) => {
     if (key === "extras" || key === "id") return;
-    updateTNote(id, { [key]: value.toUpperCase() } as Partial<TNote>);
+    const upper = value.toUpperCase();
+    updateTNote(id, { [key]: upper } as Partial<TNote>);
+    if (key === "poNumber" && upper && upper !== activePO) {
+      setActivePO(upper);
+    }
   };
 
   // Uppercase live on space key
@@ -396,24 +393,20 @@ export const Notepad = () => {
               <Plus className="h-3 w-3" /> NEW
             </button>
             {poGroups.map((po) => {
-              const groupCount = tnotes.filter((t) => (t.poNumber || "") === po).length;
               const isActive = po === activePO;
               return (
                 <button
                   key={po || "__blank__"}
                   onClick={() => setActivePO(po)}
-                  className={`group relative flex flex-col items-stretch rounded-md px-1.5 py-1 text-left transition-smooth shrink-0 ${
+                  className={`group relative rounded-md px-1.5 py-1 text-left transition-smooth shrink-0 ${
                     isActive
                       ? "bg-yellow-500 text-black"
                       : "bg-black/60 text-yellow-400 hover:bg-yellow-500/20 border border-yellow-500/30"
                   }`}
                   title={po || "Unassigned"}
                 >
-                  <span className="text-[9px] font-mono font-bold truncate leading-tight">
+                  <span className="block text-[10px] font-mono font-bold truncate leading-tight">
                     {po || "—"}
-                  </span>
-                  <span className={`text-[8px] font-mono ${isActive ? "text-black/70" : "text-yellow-600"}`}>
-                    {groupCount}n
                   </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); removePoGroup(po); }}
