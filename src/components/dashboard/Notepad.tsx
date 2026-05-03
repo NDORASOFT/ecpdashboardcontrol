@@ -536,30 +536,42 @@ export const Notepad = () => {
                         const esd = isLead ? computeESD((t.leapTime as string) || "") : null;
                         const isMoney = MONEY_FIELDS.has(f.key);
                         const rawVal = (t[f.key] as string) ?? "";
+                        const isPo = f.key === "poNumber";
                         return (
                           <div key={f.key}>
                             <div className="flex items-baseline gap-1.5 flex-wrap">
                               <label className="text-[10px] text-yellow-600 font-mono whitespace-nowrap shrink-0">
                                 {f.label}:
                               </label>
-                              <input
-                                value={rawVal}
-                                onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
-                                onBlur={(e) => handleBlur(t.id, f.key, e.target.value)}
-                                onKeyUp={(e) => handleKeyUp(t.id, f.key, e)}
-                                onKeyDown={(e) => {
-                                  if (showPasteHint && e.key === "Tab") {
-                                    e.preventDefault();
-                                    applyPendingNetPrice();
-                                  }
-                                }}
-                                placeholder={showPasteHint ? `Tab ↹ paste $${pendingNetPrice}` : isMoney ? "$0.00" : ""}
-                                className={`flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 ${
-                                  showPasteHint
-                                    ? "text-yellow-500/40 placeholder:text-yellow-500/50 italic"
-                                    : "text-yellow-300"
-                                }`}
-                              />
+                              {isPo ? (
+                                <PoNumberInput
+                                  value={rawVal}
+                                  onCommit={(v) => {
+                                    updateTNote(t.id, { poNumber: v });
+                                    if (v && v !== activePO) setActivePO(v);
+                                  }}
+                                  className="flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 text-yellow-300"
+                                />
+                              ) : (
+                                <input
+                                  value={rawVal}
+                                  onChange={(e) => updateTNote(t.id, { [f.key]: e.target.value } as Partial<TNote>)}
+                                  onBlur={(e) => handleBlur(t.id, f.key, e.target.value)}
+                                  onKeyUp={(e) => handleKeyUp(t.id, f.key, e)}
+                                  onKeyDown={(e) => {
+                                    if (showPasteHint && e.key === "Tab") {
+                                      e.preventDefault();
+                                      applyPendingNetPrice();
+                                    }
+                                  }}
+                                  placeholder={showPasteHint ? `Tab ↹ paste $${pendingNetPrice}` : isMoney ? "$0.00" : ""}
+                                  className={`flex-1 min-w-[60px] bg-transparent border-b border-yellow-500/20 px-1 py-0.5 text-xs font-mono outline-none focus:border-yellow-400 ${
+                                    showPasteHint
+                                      ? "text-yellow-500/40 placeholder:text-yellow-500/50 italic"
+                                      : "text-yellow-300"
+                                  }`}
+                                />
+                              )}
                               {showPasteHint && (
                                 <button
                                   onClick={applyPendingNetPrice}
