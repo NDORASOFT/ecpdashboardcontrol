@@ -82,7 +82,7 @@ export const FormViewer = forwardRef<
         </div>
         <div className="min-w-0">
           <h3 className="font-display text-xs font-semibold leading-tight">Order Tracker</h3>
-          <p className="text-[9px] text-muted-foreground">Detecta solo el Submit final</p>
+          <p className="text-[9px] text-muted-foreground">Counter + Form</p>
         </div>
         {url && onSubmitDetected && (
           <Button
