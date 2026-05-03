@@ -1,64 +1,70 @@
-## Fixes for PO# sidebar, infinite T-Notes, layout sizing & module merge
+## Fixes & Refactor Plan
 
-### 1. PO# sidebar creating a tab per keystroke (`Notepad.tsx`)
-**Root cause:** `updateTNote` calls `setActivePO(newPo)` on every `onChange` of the PO# input, so each character creates/switches a PO group.
+### 1. Bug: PO# creates a sidebar tab per letter typed
+**Root cause** (`Notepad.tsx`): the `poNumber` field is written into `tnotes` on every keystroke. The `poGroups` memo derives groups directly from `tnotes`, so each intermediate string ("V", "VE", "VER"…) becomes a sidebar pill.
 
-**Fix:**
-- Remove the `setActivePO` side-effect from `updateTNote`.
-- Only commit the PO# (uppercase + switch active group) on `onBlur` of the PO# field.
-- Remove the `{groupCount}n` count badge under each sidebar pill (per request — that running number is misleading).
-- Trim sidebar pill to a single line: just the PO# label.
+**Fix**: keep PO# input as local component state while editing, and only commit it to the t-note (and update `activePO`) on `blur` or `Enter`. The sidebar will then only show finalized PO#s.
 
-### 2. Infinite empty T-Notes being created (`Notepad.tsx`)
-**Root cause:** The "ensure one empty per group" effect depends on `tnotes` and `activePO`. Because issue #1 mutates `activePO` on every keystroke, the effect re-runs against a freshly-seen group with no empties and prepends new ones repeatedly. Fixing #1 stops the runaway, but harden the effect too:
+### 2. T-Notes sizing & scroll
+- Reduce T-Note card width ~20% (`w-[18rem]` → `w-[14.5rem]`) and font/padding accordingly.
+- T-Note container becomes vertically scrollable (`overflow-y-auto`, fixed `max-h`) so it doesn't push the page.
+- Whole `Notepad` column gets a tall fixed height (~`h-[640px]`) matching the FormViewer.
+- Any horizontally-overflowing field gets `overflow-x-auto` (no wrapping pushing layout wider).
 
-- Guard: only insert a new empty if there is **no T-Note** at all in the active group (`groupNotes.length === 0`), not just "no empty one". When a group has any note (even partially filled), the user can press "+ Note" to add another.
-- Keep the dedupe branch for safety.
+### 3. Embed Analyzer inside T-Notes
+- Move `Analyzer` panel out of the bottom row.
+- Add a collapsible "Analyzer" disclosure inside the PO# Notes card header (toggle button next to "Analyze"). When open, shows the full analyzer UI inline above the t-notes list.
+- Delete the bottom Analyzer column from `Index.tsx`.
 
-### 3. Layout sizing — only PO# Notes grows; others fixed (`Index.tsx`)
-Convert the main grid to **fixed-width columns** so other modules stop stretching when T-Notes grow:
+### 4. Remove Podium and Stats (temporary)
+- Remove `<Podium />` from `Index.tsx`.
+- Remove the "Stats" tab from `GoalHistoryToggle.tsx` (toggle becomes Goal/Log only).
+- Files left in repo for later, just unmounted.
 
-```text
-┌─────────────┬──────────┬──────────┬─────────┐
-│ PO# Notes   │ Calc     │ Tracker  │ Goal    │
-│ (grows ↕)   │ (fixed)  │ (fixed)  │ Podium  │
-│   ~4in W    │ 3.35in W │ ~equal   │ (fixed) │
-│             │          │ to 3 t-  │         │
-│             │ Cart     │ notes W) │         │
-│             │ (fixed)  │          │         │
-└─────────────┴──────────┴──────────┴─────────┘
+### 5. Daily Goal — mini history + editable goal
+- `GoalGauge` gets:
+  - Editable goal: click the goal number to inline-edit; persisted to `ecp.goal` (default 70).
+  - Below the gauge, a compact list of the **last 5 submissions** (PO#, type pill, amount) read from `ecp.submissions`.
+- Goal logic: count toward goal = every submission **except** `type === "76 Screen"`. Update the daily counter so 76-screen entries still increment `otherCount` but **not** the goal-tracked `count`. Adjust `Index.tsx` `confirmType` accordingly (split totals: `count` = goal-relevant, separate `otherCount` for 76).
+
+### 6. Layout — business-card sizing
+Reference: business card ≈ 3.5in × 2in (~22rem × 12rem horizontal, or 12rem × 22rem vertical).
+
+```
+┌──────────────┬──────────┬───────────────┬──────────┐
+│ PO# Notes    │ Calc     │ Form Viewer   │ Goal     │
+│ (vertical    │ Cart     │ (BC + 20%     │ (vert    │
+│  cards,      │ Vendor   │  wide, tall)  │  BC)     │
+│  scroll)     │ Vault    │               │ +mini    │
+│              │ (stacked │               │ history  │
+│              │  BC      │               │          │
+│              │  width)  │               │          │
+└──────────────┴──────────┴───────────────┴──────────┘
 ```
 
-Concrete changes in `src/pages/Index.tsx`:
-- Replace the `grid-cols-12` flex weights with explicit column widths via inline styles or a CSS grid template:
-  - PO# Notes: `width: ~22rem` (~4 in / 10 cm) — `min-h-[600px]` AND allowed to grow.
-  - Calculator+Cart column: `width: ~13.5rem` (~3.35 in / 8.5 cm), `h-fit` so it never stretches.
-  - Tracker column (merged): `width: ~22rem` (about width of 3 T-notes), `h-fit`.
-  - Goal+Podium column: `width: ~12rem`, `h-fit`.
-- Remove `min-h-[600px]` from non-PO# columns; add `self-start` so they sit at the top regardless of PO# Notes height.
-- Within Notepad's T-Note cards: shrink each card to roughly **3in wide × 4in tall**:
-  - T-Note card: `w-[18rem]` (~3in), `min-h-[15rem]` (~4in tall content area).
-  - Reduce internal padding from `p-2.5` to `p-2` and field gap from `space-y-1` to `space-y-0.5` so all 10 base fields fit in the shorter card.
+Concrete column widths in `Index.tsx`:
+- Col 1 (PO# Notes): `w-[14rem]` (vertical BC), tall `h-[640px]`.
+- Col 2 (Calc / Cart / VendorVault stacked): `w-[22rem]` (horizontal BC width); each card ~`h-[12rem]` to `h-[14rem]`.
+- Col 3 (FormViewer w/ merged counter): `w-[26rem]` (BC + 20%), tall `h-[640px]`.
+- Col 4 (Goal): `w-[14rem]` (vertical BC), tall.
 
-### 4. Merge PO Counter into Form Viewer (one module)
-Goal: a single `Order Tracker` card containing the counter at top + iframe below.
+All inner content gets `overflow-auto` (scroll) so a card never expands beyond its box. `items-start` retained so columns don't stretch.
 
-**Approach (minimum churn):**
-- Modify `FormViewer.tsx` to accept counter props (`count, poCount, otherCount, setters, onReset`) and render a slim counter strip in its header row (left of `Contar`):
-  - `[− PO# nn +]   [76: nn]   [Total: nn]   [Reset]   [Contar] [⚡] [↻]`
-  - Counter strip uses compact pill buttons (h-7), tabular-nums.
-- Delete the standalone `<OrderCounter>` block from `Index.tsx` col 3; pass the counter state/setters into `<FormViewer>` instead.
-- Keep `OrderCounter.tsx` file in place but unused (can delete in a later pass — leaving it avoids touching imports across the project).
-- Tracker column in the new layout becomes a single `<FormViewer>` card sized to ~3 T-notes wide × full available height, with `h-fit` so it doesn't stretch when PO# Notes grow.
+### 7. Cart size
+Cart (`SplitOrderCalc`) widened to the new col-2 width (`w-[22rem]`), with internal `overflow-y-auto` if content grows.
+
+---
 
 ### Files to modify
-1. `src/components/dashboard/Notepad.tsx` — fixes 1, 2, plus T-Note card sizing.
-2. `src/pages/Index.tsx` — fixed-width columns, remove `<OrderCounter>` from col 3, pass counter props to `<FormViewer>`.
-3. `src/components/dashboard/FormViewer.tsx` — accept counter props, render counter strip in header.
+- `src/components/dashboard/Notepad.tsx` — local PO# input state with blur-commit; smaller cards; embedded Analyzer disclosure; internal scroll.
+- `src/components/dashboard/GoalGauge.tsx` — editable goal + last-5 history list.
+- `src/components/dashboard/GoalHistoryToggle.tsx` — remove Stats tab; pass goal setter.
+- `src/pages/Index.tsx` — new column structure; remove Podium + bottom Analyzer; move VendorVault under Cart; persist editable `ecp.goal`; adjust `confirmType` so 76-screen doesn't increment goal `count`.
+- `src/components/dashboard/SplitOrderCalc.tsx` — width adjust + internal scroll only.
 
-No new files. No deletes (keep `OrderCounter.tsx` orphaned for now to save credits).
+### Files unmounted (kept on disk)
+- `src/components/dashboard/Podium.tsx`
+- `src/components/dashboard/StatsView.tsx`
+- `src/components/dashboard/Analyzer.tsx` (now mounted inside Notepad instead of standalone)
 
-### Out of scope (not changed)
-- Analyzer, VendorVault, GoalGauge, Podium logic untouched.
-- Submission modal flow untouched.
-- localStorage keys untouched (`ecp.count`, `ecp.count.po`, `ecp.count.other`, `ecp.tnotes.v3`, `ecp.activePO`).
+No new dependencies. Pure layout + state refactor.
