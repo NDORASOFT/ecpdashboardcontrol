@@ -6,8 +6,6 @@ import { FormViewer, type FormViewerHandle } from "@/components/dashboard/FormVi
 
 import { GoalHistoryToggle } from "@/components/dashboard/GoalHistoryToggle";
 import { VendorVault } from "@/components/dashboard/VendorVault";
-import { Analyzer } from "@/components/dashboard/Analyzer";
-import { Podium } from "@/components/dashboard/Podium";
 import { SuggestionDialog } from "@/components/dashboard/SuggestionDialog";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { LayoutDashboard } from "lucide-react";
@@ -60,7 +58,7 @@ const useEstClock = () => {
 };
 
 const Index = () => {
-  const GOAL = 70;
+  const [GOAL] = useLocalStorage<number>("ecp.goal", 70);
   const [count, setCount] = useLocalStorage<number>("ecp.count", 0);
   const [poCount, setPoCount] = useLocalStorage<number>("ecp.count.po", 0);
   const [otherCount, setOtherCount] = useLocalStorage<number>("ecp.count.other", 0);
