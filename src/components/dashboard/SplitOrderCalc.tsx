@@ -249,7 +249,7 @@ export const SplitOrderCalc = () => {
                 Paste Main + Cart A + Cart B to compare
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
     </Card>
