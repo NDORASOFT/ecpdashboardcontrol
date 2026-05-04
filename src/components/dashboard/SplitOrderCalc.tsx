@@ -213,11 +213,13 @@ export const SplitOrderCalc = () => {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2 pr-1">
-        <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount />
+      <div className={`flex-1 overflow-y-auto scrollbar-thin pr-1 ${showSplits ? "grid grid-cols-2 gap-2" : "flex flex-col"}`}>
+        <div className={showSplits ? "flex flex-col" : "flex-1 flex flex-col"}>
+          <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount />
+        </div>
 
         {showSplits && (
-          <>
+          <div className="flex flex-col gap-2">
             <CartInput label="Cart A" cart={splitA} onChange={setSplitA} accent="sky" showCopyAmount />
             <CartInput label="Cart B" cart={splitB} onChange={setSplitB} accent="coral" showCopyAmount />
 
@@ -247,7 +249,7 @@ export const SplitOrderCalc = () => {
                 Paste Main + Cart A + Cart B to compare
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
     </Card>
