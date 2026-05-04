@@ -136,6 +136,31 @@ export const SplitOrderCalc = () => {
   const [splitA, setSplitA] = useState<Cart>({ ...EMPTY });
   const [splitB, setSplitB] = useState<Cart>({ ...EMPTY });
   const [showSplits, setShowSplits] = useState(false);
+  const [savedCarts, setSavedCarts] = useLocalStorage<Record<string, { original: Cart; splitA?: Cart; splitB?: Cart; savedAt: string }>>("ecp.savedCarts", {});
+
+  // Save cart snapshot when an order is submitted
+  useEffect(() => {
+    const onSubmit = (e: Event) => {
+      const ce = e as CustomEvent<{ poNumber?: string }>;
+      const po = (ce.detail?.poNumber || "").trim().toUpperCase();
+      if (!po) return;
+      setSavedCarts({
+        ...savedCarts,
+        [po]: {
+          original,
+          splitA: showSplits ? splitA : undefined,
+          splitB: showSplits ? splitB : undefined,
+          savedAt: new Date().toISOString(),
+        },
+      });
+      // reset for next entry
+      setOriginal({ ...EMPTY });
+      setSplitA({ ...EMPTY });
+      setSplitB({ ...EMPTY });
+    };
+    window.addEventListener("ecp:order-submitted", onSubmit as EventListener);
+    return () => window.removeEventListener("ecp:order-submitted", onSubmit as EventListener);
+  }, [original, splitA, splitB, showSplits, savedCarts, setSavedCarts]);
 
   // Consume analyzer's cart payload
   useEffect(() => {
