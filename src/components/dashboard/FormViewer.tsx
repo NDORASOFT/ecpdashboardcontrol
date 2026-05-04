@@ -2,30 +2,26 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check } from "lucide-react";
-import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-export type FormViewerHandle = { reload: () => void };
-
-export const FormViewer = forwardRef<
-  FormViewerHandle,
-  { onSubmitDetected?: () => void }
->(({ onSubmitDetected }, ref) => {
+export const FormViewer = ({
+  onSubmitDetected,
+}: {
+  onSubmitDetected?: () => void;
+}) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
-  const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", true);
+  const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", false);
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
   const [editing, setEditing] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTriggerRef = useRef<number>(0);
+  const focusStartRef = useRef<number>(0);
   const loadCountRef = useRef<number>(0);
   const initialLoadAtRef = useRef<number>(0);
 
-  useImperativeHandle(ref, () => ({
-    reload: () => setKey((k) => k + 1),
-  }));
-
-  const triggerSubmit = () => {
+  const triggerSubmit = (source: string) => {
     if (!onSubmitDetected) return;
     const now = Date.now();
     if (now - lastTriggerRef.current < 3000) return;
@@ -33,26 +29,18 @@ export const FormViewer = forwardRef<
     onSubmitDetected();
   };
 
-  // Google Forms flow:
-  //   load 1 = initial render
-  //   load 2 = "Next" page (intermediate) -> NOT submit
-  //   load 3 = final "/formResponse" thank-you page -> SUBMIT
-  // Cross-origin prevents reading the URL, so we use load count + min elapsed time.
   const handleIframeLoad = () => {
     loadCountRef.current += 1;
+    // First load = initial form render. Subsequent loads on Google Forms
+    // typically mean the user submitted (page navigates to /formResponse "thank you").
     if (loadCountRef.current === 1) {
       initialLoadAtRef.current = Date.now();
       return;
     }
     if (!autoDetect) return;
-    // Only treat as submit if it's the 3rd+ load OR enough time elapsed (real fill time).
-    const elapsed = Date.now() - initialLoadAtRef.current;
-    if (loadCountRef.current >= 3 && elapsed > 8000) {
-      triggerSubmit();
-    } else if (elapsed > 25000) {
-      // Fallback: any reload after 25s is almost certainly a submit
-      triggerSubmit();
-    }
+    // Require at least 4s since first load to avoid counting redirects/preloads.
+    if (Date.now() - initialLoadAtRef.current < 4000) return;
+    triggerSubmit("iframe-load");
   };
 
   const toEmbed = (u: string) => {
@@ -64,10 +52,44 @@ export const FormViewer = forwardRef<
     return u;
   };
 
+  // Reset iframe load tracking whenever the form is reloaded or URL changes
   useEffect(() => {
     loadCountRef.current = 0;
     initialLoadAtRef.current = 0;
   }, [key, url]);
+
+  // Heuristic: only trigger if iframe was focused for at least MIN_FOCUS_MS
+  // before window regains focus (real form interaction, not a quick click-out).
+  useEffect(() => {
+    if (!url || !onSubmitDetected || !autoDetect) return;
+
+    const MIN_FOCUS_MS = 8000; // require at least 8s of iframe focus
+    const DEBOUNCE_MS = 5000;
+
+    const checkFocus = () => {
+      if (document.activeElement === iframeRef.current) {
+        if (focusStartRef.current === 0) {
+          focusStartRef.current = Date.now();
+        }
+      }
+    };
+
+    const onWindowFocus = () => {
+      const focusedFor = focusStartRef.current ? Date.now() - focusStartRef.current : 0;
+      focusStartRef.current = 0;
+      if (focusedFor < MIN_FOCUS_MS) return;
+      triggerSubmit("focus-return");
+    };
+
+    const interval = setInterval(checkFocus, 500);
+    window.addEventListener("focus", onWindowFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onWindowFocus);
+      focusStartRef.current = 0;
+    };
+  }, [url, onSubmitDetected, key, autoDetect]);
 
   return (
     <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
@@ -77,14 +99,15 @@ export const FormViewer = forwardRef<
         </div>
         <div>
           <h3 className="font-display text-xs font-semibold leading-tight">Order Tracker</h3>
-          <p className="text-[9px] text-muted-foreground">Detecta solo el Submit final</p>
+          <p className="text-[9px] text-muted-foreground">Completa tras cada orden</p>
         </div>
         <Button
           variant="ghost"
           size="icon"
           className={`ml-auto h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
           onClick={() => setAutoDetect(!autoDetect)}
-          title={autoDetect ? "Auto-detect ON" : "Auto-detect OFF"}
+          aria-label={autoDetect ? "Desactivar auto-detect" : "Activar auto-detect"}
+          title={autoDetect ? "Auto-detect ON (click para apagar)" : "Auto-detect OFF (click para encender)"}
         >
           {autoDetect ? <Zap className="h-3.5 w-3.5" /> : <ZapOff className="h-3.5 w-3.5" />}
         </Button>
@@ -174,7 +197,7 @@ export const FormViewer = forwardRef<
           size="sm"
           variant="default"
           className="mt-2 h-9 w-full bg-mint text-primary-foreground hover:brightness-110 font-semibold"
-          onClick={triggerSubmit}
+          onClick={() => triggerSubmit("manual-button")}
         >
           <Check className="h-4 w-4 mr-1.5" />
           Submit contado
@@ -182,5 +205,4 @@ export const FormViewer = forwardRef<
       )}
     </Card>
   );
-});
-FormViewer.displayName = "FormViewer";
+};

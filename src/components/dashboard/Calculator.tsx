@@ -21,7 +21,7 @@ export const Calculator = () => {
   const [discount, setDiscount] = useState("");
 
   const input = (n: string) => {
-    if (overwrite || display === "0") {
+    if (overwrite) {
       setDisplay(n === "." ? "0." : n);
       setOverwrite(false);
     } else {
@@ -174,11 +174,7 @@ export const Calculator = () => {
                     try {
                       await navigator.clipboard.writeText(final.toFixed(2));
                       setCopied(true);
-                      // Notify Notepad/T-Notes to offer pasting into Net Price
-                      window.dispatchEvent(
-                        new CustomEvent("ecp:net-price", { detail: { value: final.toFixed(2) } })
-                      );
-                      toast({ title: "Copiado", description: `$${final.toFixed(2)} · Listo para pegar en Net price` });
+                      toast({ title: "Copiado", description: `$${final.toFixed(2)}` });
                       setTimeout(() => setCopied(false), 1200);
                     } catch {
                       toast({ title: "Error al copiar", variant: "destructive" });
@@ -186,7 +182,7 @@ export const Calculator = () => {
                   }}
                   className="h-7 w-7 rounded-lg bg-primary-foreground/15 hover:bg-primary-foreground/25 grid place-items-center transition-smooth"
                   aria-label="Copiar total con descuento"
-                  title="Copiar y enviar a Net price"
+                  title="Copiar total con descuento"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
