@@ -1,23 +1,16 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check, Plus, Minus, RotateCcw } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check } from "lucide-react";
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export type FormViewerHandle = { reload: () => void };
 
-type CounterProps = {
-  count: number; setCount: (n: number) => void;
-  poCount: number; setPoCount: (n: number) => void;
-  otherCount: number; setOtherCount: (n: number) => void;
-  onResetCounter: () => void;
-};
-
 export const FormViewer = forwardRef<
   FormViewerHandle,
-  { onSubmitDetected?: () => void } & Partial<CounterProps>
->(({ onSubmitDetected, count = 0, setCount, poCount = 0, setPoCount, otherCount = 0, setOtherCount, onResetCounter }, ref) => {
+  { onSubmitDetected?: () => void }
+>(({ onSubmitDetected }, ref) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", true);
   const [draft, setDraft] = useState(url);
@@ -44,8 +37,7 @@ export const FormViewer = forwardRef<
   //   load 1 = initial render
   //   load 2 = "Next" page (intermediate) -> NOT submit
   //   load 3 = final "/formResponse" thank-you page -> SUBMIT
-  // We trigger ONLY on load >= 3 with a min elapsed time, so partial Fraud-expanding
-  // re-renders or back nav do not falsely count.
+  // Cross-origin prevents reading the URL, so we use load count + min elapsed time.
   const handleIframeLoad = () => {
     loadCountRef.current += 1;
     if (loadCountRef.current === 1) {
@@ -53,9 +45,12 @@ export const FormViewer = forwardRef<
       return;
     }
     if (!autoDetect) return;
+    // Only treat as submit if it's the 3rd+ load OR enough time elapsed (real fill time).
     const elapsed = Date.now() - initialLoadAtRef.current;
-    // Strictly require 3+ loads AND ≥10s elapsed (real fill time).
-    if (loadCountRef.current >= 3 && elapsed > 10000) {
+    if (loadCountRef.current >= 3 && elapsed > 8000) {
+      triggerSubmit();
+    } else if (elapsed > 25000) {
+      // Fallback: any reload after 25s is almost certainly a submit
       triggerSubmit();
     }
   };
@@ -76,30 +71,18 @@ export const FormViewer = forwardRef<
 
   return (
     <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-3">
         <div className="h-8 w-8 rounded-xl bg-primary text-primary-foreground grid place-items-center">
           <ClipboardList className="h-4 w-4" />
         </div>
-        <div className="min-w-0">
+        <div>
           <h3 className="font-display text-xs font-semibold leading-tight">Order Tracker</h3>
-          <p className="text-[9px] text-muted-foreground">Counter + Form</p>
+          <p className="text-[9px] text-muted-foreground">Detecta solo el Submit final</p>
         </div>
-        {url && onSubmitDetected && (
-          <Button
-            size="sm"
-            variant="default"
-            className="ml-auto h-7 bg-mint text-primary-foreground hover:brightness-110 font-semibold text-[11px] px-2.5"
-            onClick={triggerSubmit}
-            title="Mark order as counted"
-          >
-            <Check className="h-3.5 w-3.5 mr-1" />
-            Contar
-          </Button>
-        )}
         <Button
           variant="ghost"
           size="icon"
-          className={`h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
+          className={`ml-auto h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
           onClick={() => setAutoDetect(!autoDetect)}
           title={autoDetect ? "Auto-detect ON" : "Auto-detect OFF"}
         >
@@ -140,57 +123,6 @@ export const FormViewer = forwardRef<
           </>
         )}
       </div>
-
-      {setPoCount && setCount && setOtherCount && onResetCounter && (
-        <div className="flex items-center gap-1.5 mb-2 px-1 py-1.5 rounded-lg bg-secondary/40">
-          <button
-            onClick={() => { setPoCount(Math.max(0, poCount - 1)); setCount(Math.max(0, count - 1)); }}
-            className="h-6 w-6 grid place-items-center rounded-md bg-secondary hover:bg-muted"
-            title="PO -1"
-          >
-            <Minus className="h-3 w-3" />
-          </button>
-          <div className="flex flex-col items-center px-1">
-            <span className="font-display text-base font-bold tabular-nums leading-none">{poCount}</span>
-            <span className="text-[8px] text-muted-foreground uppercase">PO</span>
-          </div>
-          <button
-            onClick={() => { setPoCount(poCount + 1); setCount(count + 1); }}
-            className="h-6 w-6 grid place-items-center rounded-md bg-primary text-primary-foreground hover:brightness-110"
-            title="PO +1"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-          <div className="mx-1 h-6 w-px bg-border/60" />
-          <button
-            onClick={() => { setOtherCount(Math.max(0, otherCount - 1)); setCount(Math.max(0, count - 1)); }}
-            className="h-5 w-5 grid place-items-center rounded-md bg-secondary hover:bg-muted text-muted-foreground"
-          >
-            <Minus className="h-2.5 w-2.5" />
-          </button>
-          <div className="flex flex-col items-center px-0.5">
-            <span className="text-sm font-semibold tabular-nums leading-none">{otherCount}</span>
-            <span className="text-[8px] text-muted-foreground uppercase">76</span>
-          </div>
-          <button
-            onClick={() => { setOtherCount(otherCount + 1); setCount(count + 1); }}
-            className="h-5 w-5 grid place-items-center rounded-md bg-secondary hover:bg-muted text-muted-foreground"
-          >
-            <Plus className="h-2.5 w-2.5" />
-          </button>
-          <div className="ml-auto flex flex-col items-center px-1">
-            <span className="text-sm font-semibold tabular-nums leading-none">{count}</span>
-            <span className="text-[8px] text-muted-foreground uppercase">Tot</span>
-          </div>
-          <button
-            onClick={onResetCounter}
-            className="h-6 w-6 grid place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            title="Reset counters"
-          >
-            <RotateCcw className="h-3 w-3" />
-          </button>
-        </div>
-      )}
 
       {(!url || editing) && (
         <div className="flex gap-2 mb-3">
@@ -237,6 +169,17 @@ export const FormViewer = forwardRef<
         )}
       </div>
 
+      {url && onSubmitDetected && (
+        <Button
+          size="sm"
+          variant="default"
+          className="mt-2 h-9 w-full bg-mint text-primary-foreground hover:brightness-110 font-semibold"
+          onClick={triggerSubmit}
+        >
+          <Check className="h-4 w-4 mr-1.5" />
+          Submit contado
+        </Button>
+      )}
     </Card>
   );
 });
