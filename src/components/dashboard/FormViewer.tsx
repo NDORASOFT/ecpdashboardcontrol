@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Check } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -18,30 +18,6 @@ export const FormViewer = ({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTriggerRef = useRef<number>(0);
   const focusStartRef = useRef<number>(0);
-  const loadCountRef = useRef<number>(0);
-  const initialLoadAtRef = useRef<number>(0);
-
-  const triggerSubmit = (source: string) => {
-    if (!onSubmitDetected) return;
-    const now = Date.now();
-    if (now - lastTriggerRef.current < 3000) return;
-    lastTriggerRef.current = now;
-    onSubmitDetected();
-  };
-
-  const handleIframeLoad = () => {
-    loadCountRef.current += 1;
-    // First load = initial form render. Subsequent loads on Google Forms
-    // typically mean the user submitted (page navigates to /formResponse "thank you").
-    if (loadCountRef.current === 1) {
-      initialLoadAtRef.current = Date.now();
-      return;
-    }
-    if (!autoDetect) return;
-    // Require at least 4s since first load to avoid counting redirects/preloads.
-    if (Date.now() - initialLoadAtRef.current < 4000) return;
-    triggerSubmit("iframe-load");
-  };
 
   const toEmbed = (u: string) => {
     if (!u) return "";
@@ -51,12 +27,6 @@ export const FormViewer = ({
     }
     return u;
   };
-
-  // Reset iframe load tracking whenever the form is reloaded or URL changes
-  useEffect(() => {
-    loadCountRef.current = 0;
-    initialLoadAtRef.current = 0;
-  }, [key, url]);
 
   // Heuristic: only trigger if iframe was focused for at least MIN_FOCUS_MS
   // before window regains focus (real form interaction, not a quick click-out).
@@ -78,7 +48,11 @@ export const FormViewer = ({
       const focusedFor = focusStartRef.current ? Date.now() - focusStartRef.current : 0;
       focusStartRef.current = 0;
       if (focusedFor < MIN_FOCUS_MS) return;
-      triggerSubmit("focus-return");
+      const now = Date.now();
+      if (now - lastTriggerRef.current > DEBOUNCE_MS) {
+        lastTriggerRef.current = now;
+        onSubmitDetected();
+      }
     };
 
     const interval = setInterval(checkFocus, 500);
@@ -172,7 +146,6 @@ export const FormViewer = ({
             ref={iframeRef}
             key={key}
             src={toEmbed(url)}
-            onLoad={handleIframeLoad}
             className="w-full h-full"
             title="Google Form"
             loading="lazy"
@@ -191,18 +164,6 @@ export const FormViewer = ({
           </div>
         )}
       </div>
-
-      {url && onSubmitDetected && (
-        <Button
-          size="sm"
-          variant="default"
-          className="mt-2 h-9 w-full bg-mint text-primary-foreground hover:brightness-110 font-semibold"
-          onClick={() => triggerSubmit("manual-button")}
-        >
-          <Check className="h-4 w-4 mr-1.5" />
-          Submit contado
-        </Button>
-      )}
     </Card>
   );
 };
