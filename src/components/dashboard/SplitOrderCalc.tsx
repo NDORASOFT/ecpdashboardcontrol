@@ -62,12 +62,14 @@ const CartInput = ({
   onChange,
   accent,
   showCopyAmount = false,
+  hideTextarea = false,
 }: {
   label: string;
   cart: Cart;
   onChange: (c: Cart) => void;
   accent: string;
   showCopyAmount?: boolean;
+  hideTextarea?: boolean;
 }) => {
   const paste = async () => {
     try {
