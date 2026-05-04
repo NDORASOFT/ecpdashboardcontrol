@@ -7,6 +7,8 @@ import { FormViewer, type FormViewerHandle } from "@/components/dashboard/FormVi
 import { GoalHistoryToggle } from "@/components/dashboard/GoalHistoryToggle";
 import { VendorVault } from "@/components/dashboard/VendorVault";
 import { SuggestionDialog } from "@/components/dashboard/SuggestionDialog";
+import { DailySummaryCard } from "@/components/dashboard/DailySummaryCard";
+import { SummaryPill } from "@/components/dashboard/ui/SceneCard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { LayoutDashboard } from "lucide-react";
 import {
@@ -171,7 +173,8 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-[1500px] mx-auto flex flex-wrap gap-3 items-start">
+      <main className="max-w-[1500px] mx-auto flex flex-col gap-3">
+        <div className="flex flex-wrap gap-3 items-start">
         {/* Col 1: PO# Notes — vertical business-card width, tall */}
         <div className="w-full md:w-[20rem] md:flex-shrink-0 self-start h-[640px] flex">
           <Notepad />
@@ -200,10 +203,24 @@ const Index = () => {
           />
         </div>
 
-        {/* Col 4: Goal (vertical BC) */}
-        <div className="w-full md:w-[14rem] md:flex-shrink-0 self-start flex flex-col gap-3">
-          <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
+        {/* Col 4: Goal + Daily Summary (vertical BC) */}
+        <div className="w-full md:w-[14rem] md:flex-shrink-0 self-start flex flex-col gap-3 h-[640px]">
+          <div className="flex-1 min-h-0">
+            <GoalHistoryToggle count={count} goal={GOAL} setTodayCount={setCount} />
+          </div>
+          <div className="h-[15rem] flex">
+            <DailySummaryCard count={count} poCount={poCount} otherCount={otherCount} goal={GOAL} />
+          </div>
         </div>
+        </div>
+
+        {/* Bottom-wide summary pill */}
+        <SummaryPill
+          label={`You logged ${count} order${count === 1 ? "" : "s"} today`}
+          meta={`${poCount} PO · ${otherCount} other · ${GOAL > 0 ? Math.round((count / GOAL) * 100) : 0}% of goal`}
+          actionLabel="Reset day"
+          onAction={resetAll}
+        />
       </main>
 
       <footer className="max-w-[1500px] mx-auto mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 text-[9px] text-muted-foreground">

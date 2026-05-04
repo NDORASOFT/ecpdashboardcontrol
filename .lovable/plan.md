@@ -1,70 +1,43 @@
-## Fixes & Refactor Plan
+# Match Reference Design + Fill Empty Space
 
-### 1. Bug: PO# creates a sidebar tab per letter typed
-**Root cause** (`Notepad.tsx`): the `poNumber` field is written into `tnotes` on every keystroke. The `poGroups` memo derives groups directly from `tnotes`, so each intermediate string ("V", "VE", "VER"…) becomes a sidebar pill.
+Redesign the dashboard cards to mimic the reference (soft rounded cards, pastel tinted "feature" tiles with an icon chip top-left, a `••` menu top-right, big title bottom-left and a small meta line). Fill the empty area below Col 4 with a wide footer "summary" pill card matching the reference's "You created 8 scenes / See All" row.
 
-**Fix**: keep PO# input as local component state while editing, and only commit it to the t-note (and update `activePO`) on `blur` or `Enter`. The sidebar will then only show finalized PO#s.
+## 1. New shared visual primitives (`src/components/dashboard/ui/SceneCard.tsx`)
+- `SceneCard` wrapper: `rounded-3xl`, soft shadow, padded, supports `tone` prop (`sky` pastel-blue, `cream` white, `mint`, `coral`, `sun`).
+- Top row: circular icon chip (40px, tinted bg) + `••` menu dot affordance.
+- Bottom block: large display title + tiny muted meta line.
+- `SummaryPill`: wide rounded card with `(+)` chip, two-line label on left, dark pill button on right ("See All" / action).
 
-### 2. T-Notes sizing & scroll
-- Reduce T-Note card width ~20% (`w-[18rem]` → `w-[14.5rem]`) and font/padding accordingly.
-- T-Note container becomes vertically scrollable (`overflow-y-auto`, fixed `max-h`) so it doesn't push the page.
-- Whole `Notepad` column gets a tall fixed height (~`h-[640px]`) matching the FormViewer.
-- Any horizontally-overflowing field gets `overflow-x-auto` (no wrapping pushing layout wider).
+Add a tone palette in `index.css`:
+- `--tile-sky: 215 90% 88%`, `--tile-cream: 40 30% 99%`, `--tile-mint: 150 55% 86%`, `--tile-coral: 14 90% 88%`, `--tile-sun: 48 100% 86%`.
 
-### 3. Embed Analyzer inside T-Notes
-- Move `Analyzer` panel out of the bottom row.
-- Add a collapsible "Analyzer" disclosure inside the PO# Notes card header (toggle button next to "Analyze"). When open, shows the full analyzer UI inline above the t-notes list.
-- Delete the bottom Analyzer column from `Index.tsx`.
+## 2. Apply tile aesthetic to existing modules
+Wrap (don't rewrite logic) the headers of these in the new `SceneCard` look:
+- `Calculator.tsx` → tone `sky`, icon Calculator.
+- `SplitOrderCalc.tsx` → tone `cream`, icon ShoppingCart.
+- `VendorVault.tsx` → tone `mint`, icon Store.
+- `FormViewer.tsx` → tone `cream`, icon ClipboardList.
+- `Notepad.tsx` → tone `sun`, icon StickyNote.
+- `GoalGauge.tsx` → tone `coral`, icon Target.
 
-### 4. Remove Podium and Stats (temporary)
-- Remove `<Podium />` from `Index.tsx`.
-- Remove the "Stats" tab from `GoalHistoryToggle.tsx` (toggle becomes Goal/Log only).
-- Files left in repo for later, just unmounted.
+The functional bodies (inputs, gauges, iframes, lists) stay; only the card chrome + header changes for visual consistency.
 
-### 5. Daily Goal — mini history + editable goal
-- `GoalGauge` gets:
-  - Editable goal: click the goal number to inline-edit; persisted to `ecp.goal` (default 70).
-  - Below the gauge, a compact list of the **last 5 submissions** (PO#, type pill, amount) read from `ecp.submissions`.
-- Goal logic: count toward goal = every submission **except** `type === "76 Screen"`. Update the daily counter so 76-screen entries still increment `otherCount` but **not** the goal-tracked `count`. Adjust `Index.tsx` `confirmType` accordingly (split totals: `count` = goal-relevant, separate `otherCount` for 76).
+## 3. Fill the empty space (Col 4 below Goal)
+`Index.tsx` Col 4 currently leaves a tall gap because `GoalHistoryToggle` doesn't stretch. Add below it:
+- `DailySummaryCard` (`SceneCard` tone `cream`, vertical) showing: today's total count, PO count, Other count, % to goal — mirrors the "8 scenes / 24 devices in use" stat density of the reference.
+- A `SummaryPill` spanning the bottom of `<main>` (full width under all 4 columns) with `(+)` chip, "You logged N orders today · M toward goal" label, and a dark "Reset day" pill button (wires to existing `resetAll`).
 
-### 6. Layout — business-card sizing
-Reference: business card ≈ 3.5in × 2in (~22rem × 12rem horizontal, or 12rem × 22rem vertical).
+## 4. Layout polish in `Index.tsx`
+- Wrap `<main>` children in a vertical flex so the 4 columns row sits above the new full-width `SummaryPill`.
+- Make Col 4 a `flex flex-col gap-3 h-[640px]`: `GoalHistoryToggle` `flex-1`, `DailySummaryCard` fixed ~`h-[16rem]`. No more dead space.
+- Use consistent `rounded-3xl`, `shadow-soft`, `p-4` across cards via the new primitive.
 
-```
-┌──────────────┬──────────┬───────────────┬──────────┐
-│ PO# Notes    │ Calc     │ Form Viewer   │ Goal     │
-│ (vertical    │ Cart     │ (BC + 20%     │ (vert    │
-│  cards,      │ Vendor   │  wide, tall)  │  BC)     │
-│  scroll)     │ Vault    │               │ +mini    │
-│              │ (stacked │               │ history  │
-│              │  BC      │               │          │
-│              │  width)  │               │          │
-└──────────────┴──────────┴───────────────┴──────────┘
-```
+## Technical notes
+- No data model changes; `DailySummaryCard` reads existing `count`, `poCount`, `otherCount`, `GOAL` props passed from `Index`.
+- `SummaryPill` `onAction` prop wires to `resetAll`.
+- All tints use HSL tokens so dark mode still works (dark mode mutes the tint to ~20% saturation via `.dark` overrides).
+- Keeps AS400 black/yellow data fields inside Notepad/Cart untouched per existing memory rule.
 
-Concrete column widths in `Index.tsx`:
-- Col 1 (PO# Notes): `w-[14rem]` (vertical BC), tall `h-[640px]`.
-- Col 2 (Calc / Cart / VendorVault stacked): `w-[22rem]` (horizontal BC width); each card ~`h-[12rem]` to `h-[14rem]`.
-- Col 3 (FormViewer w/ merged counter): `w-[26rem]` (BC + 20%), tall `h-[640px]`.
-- Col 4 (Goal): `w-[14rem]` (vertical BC), tall.
-
-All inner content gets `overflow-auto` (scroll) so a card never expands beyond its box. `items-start` retained so columns don't stretch.
-
-### 7. Cart size
-Cart (`SplitOrderCalc`) widened to the new col-2 width (`w-[22rem]`), with internal `overflow-y-auto` if content grows.
-
----
-
-### Files to modify
-- `src/components/dashboard/Notepad.tsx` — local PO# input state with blur-commit; smaller cards; embedded Analyzer disclosure; internal scroll.
-- `src/components/dashboard/GoalGauge.tsx` — editable goal + last-5 history list.
-- `src/components/dashboard/GoalHistoryToggle.tsx` — remove Stats tab; pass goal setter.
-- `src/pages/Index.tsx` — new column structure; remove Podium + bottom Analyzer; move VendorVault under Cart; persist editable `ecp.goal`; adjust `confirmType` so 76-screen doesn't increment goal `count`.
-- `src/components/dashboard/SplitOrderCalc.tsx` — width adjust + internal scroll only.
-
-### Files unmounted (kept on disk)
-- `src/components/dashboard/Podium.tsx`
-- `src/components/dashboard/StatsView.tsx`
-- `src/components/dashboard/Analyzer.tsx` (now mounted inside Notepad instead of standalone)
-
-No new dependencies. Pure layout + state refactor.
+## Files
+- add: `src/components/dashboard/ui/SceneCard.tsx`, `src/components/dashboard/DailySummaryCard.tsx`
+- edit: `src/index.css` (tile tokens), `src/pages/Index.tsx` (layout + summary pill), and the 6 module headers listed above.

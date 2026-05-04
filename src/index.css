@@ -46,6 +46,13 @@
     --mint: 150 50% 55%;
     --sky: 205 80% 60%;
 
+    /* Pastel tile tones (Scenes-style) */
+    --tile-sky: 215 90% 88%;
+    --tile-cream: 40 30% 99%;
+    --tile-mint: 150 55% 86%;
+    --tile-coral: 14 90% 88%;
+    --tile-sun: 48 100% 86%;
+
     /* Gradients */
     --gradient-sun: radial-gradient(circle at 30% 30%, hsl(var(--sun-glow)) 0%, hsl(var(--sun)) 55%, hsl(45 90% 50%) 100%);
     --gradient-coral: radial-gradient(circle at 30% 30%, hsl(var(--coral-glow)) 0%, hsl(var(--coral)) 60%, hsl(8 80% 55%) 100%);
@@ -90,6 +97,12 @@
     --border: 30 8% 22%;
     --input: 30 8% 22%;
     --ring: 45 95% 60%;
+
+    --tile-sky: 215 30% 22%;
+    --tile-cream: 30 10% 14%;
+    --tile-mint: 150 25% 22%;
+    --tile-coral: 14 30% 24%;
+    --tile-sun: 48 35% 22%;
   }
 }
 
