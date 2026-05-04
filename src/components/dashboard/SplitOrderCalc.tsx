@@ -245,7 +245,7 @@ export const SplitOrderCalc = () => {
 
       <div className={`flex-1 overflow-y-auto scrollbar-thin pr-1 ${showSplits ? "grid grid-cols-2 gap-2" : "flex flex-col"}`}>
         <div className={showSplits ? "flex flex-col" : "flex-1 flex flex-col"}>
-          <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount />
+          <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount hideTextarea={showSplits} />
         </div>
 
         {showSplits && (
