@@ -133,6 +133,9 @@ const Index = () => {
         setCount(count + 1);
       }
     }
+    if (type !== "Cancel order") {
+      window.dispatchEvent(new CustomEvent("ecp:order-submitted", { detail: { poNumber: draftPO.trim().toUpperCase() } }));
+    }
     setAskType(false);
     setShowFraud(false);
     setTimeout(() => formRef.current?.reload(), 200);
