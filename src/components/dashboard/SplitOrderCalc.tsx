@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,12 +62,14 @@ const CartInput = ({
   onChange,
   accent,
   showCopyAmount = false,
+  hideTextarea = false,
 }: {
   label: string;
   cart: Cart;
   onChange: (c: Cart) => void;
   accent: string;
   showCopyAmount?: boolean;
+  hideTextarea?: boolean;
 }) => {
   const paste = async () => {
     try {
@@ -102,12 +105,14 @@ const CartInput = ({
         </div>
       </div>
 
-      <textarea
-        value={cart.raw}
-        onChange={(e) => onChange(parseCart(e.target.value))}
-        placeholder="Paste cart here..."
-        className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-1.5 text-[10px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-16"
-      />
+      {!hideTextarea && (
+        <textarea
+          value={cart.raw}
+          onChange={(e) => onChange(parseCart(e.target.value))}
+          placeholder="Paste cart here..."
+          className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-1.5 text-[10px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-16"
+        />
+      )}
 
       <div className="grid grid-cols-4 gap-1 text-[9px] font-mono">
         {[
@@ -131,6 +136,31 @@ export const SplitOrderCalc = () => {
   const [splitA, setSplitA] = useState<Cart>({ ...EMPTY });
   const [splitB, setSplitB] = useState<Cart>({ ...EMPTY });
   const [showSplits, setShowSplits] = useState(false);
+  const [savedCarts, setSavedCarts] = useLocalStorage<Record<string, { original: Cart; splitA?: Cart; splitB?: Cart; savedAt: string }>>("ecp.savedCarts", {});
+
+  // Save cart snapshot when an order is submitted
+  useEffect(() => {
+    const onSubmit = (e: Event) => {
+      const ce = e as CustomEvent<{ poNumber?: string }>;
+      const po = (ce.detail?.poNumber || "").trim().toUpperCase();
+      if (!po) return;
+      setSavedCarts({
+        ...savedCarts,
+        [po]: {
+          original,
+          splitA: showSplits ? splitA : undefined,
+          splitB: showSplits ? splitB : undefined,
+          savedAt: new Date().toISOString(),
+        },
+      });
+      // reset for next entry
+      setOriginal({ ...EMPTY });
+      setSplitA({ ...EMPTY });
+      setSplitB({ ...EMPTY });
+    };
+    window.addEventListener("ecp:order-submitted", onSubmit as EventListener);
+    return () => window.removeEventListener("ecp:order-submitted", onSubmit as EventListener);
+  }, [original, splitA, splitB, showSplits, savedCarts, setSavedCarts]);
 
   // Consume analyzer's cart payload
   useEffect(() => {
@@ -215,7 +245,7 @@ export const SplitOrderCalc = () => {
 
       <div className={`flex-1 overflow-y-auto scrollbar-thin pr-1 ${showSplits ? "grid grid-cols-2 gap-2" : "flex flex-col"}`}>
         <div className={showSplits ? "flex flex-col" : "flex-1 flex flex-col"}>
-          <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount />
+          <CartInput label="Main Cart" cart={original} onChange={setOriginal} accent="primary" showCopyAmount hideTextarea={showSplits} />
         </div>
 
         {showSplits && (
