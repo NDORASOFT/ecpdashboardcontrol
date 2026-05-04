@@ -105,12 +105,14 @@ const CartInput = ({
         </div>
       </div>
 
-      <textarea
-        value={cart.raw}
-        onChange={(e) => onChange(parseCart(e.target.value))}
-        placeholder="Paste cart here..."
-        className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-1.5 text-[10px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-16"
-      />
+      {!hideTextarea && (
+        <textarea
+          value={cart.raw}
+          onChange={(e) => onChange(parseCart(e.target.value))}
+          placeholder="Paste cart here..."
+          className="w-full resize-none bg-black border border-yellow-500/30 rounded-lg p-1.5 text-[10px] text-yellow-400 placeholder:text-yellow-700 font-mono outline-none focus:ring-1 focus:ring-yellow-500 scrollbar-thin h-16"
+        />
+      )}
 
       <div className="grid grid-cols-4 gap-1 text-[9px] font-mono">
         {[
