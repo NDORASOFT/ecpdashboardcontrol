@@ -173,7 +173,8 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-[1500px] mx-auto flex flex-wrap gap-3 items-start">
+      <main className="max-w-[1500px] mx-auto flex flex-col gap-3">
+        <div className="flex flex-wrap gap-3 items-start">
         {/* Col 1: PO# Notes — vertical business-card width, tall */}
         <div className="w-full md:w-[20rem] md:flex-shrink-0 self-start h-[640px] flex">
           <Notepad />
