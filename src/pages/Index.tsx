@@ -7,6 +7,8 @@ import { FormViewer, type FormViewerHandle } from "@/components/dashboard/FormVi
 import { GoalHistoryToggle } from "@/components/dashboard/GoalHistoryToggle";
 import { VendorVault } from "@/components/dashboard/VendorVault";
 import { SuggestionDialog } from "@/components/dashboard/SuggestionDialog";
+import { DailySummaryCard } from "@/components/dashboard/DailySummaryCard";
+import { SummaryPill } from "@/components/dashboard/ui/SceneCard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { LayoutDashboard } from "lucide-react";
 import {

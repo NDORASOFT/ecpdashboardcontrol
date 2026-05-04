@@ -97,6 +97,12 @@
     --border: 30 8% 22%;
     --input: 30 8% 22%;
     --ring: 45 95% 60%;
+
+    --tile-sky: 215 30% 22%;
+    --tile-cream: 30 10% 14%;
+    --tile-mint: 150 25% 22%;
+    --tile-coral: 14 30% 24%;
+    --tile-sun: 48 35% 22%;
   }
 }
 
