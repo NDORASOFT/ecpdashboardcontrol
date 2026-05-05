@@ -1,85 +1,93 @@
+## Goal
 
-Plan: rebalancear el layout del dashboard.
+Merge **OrderCounter** + **FormViewer** into a single module called **Tracker** that auto-counts each Google Form submission by detecting iframe navigation stages, and relocate the PO# / PO total counters into the totals area.
 
-**Cambios en `src/pages/Index.tsx` (grid layout)**
+---
 
-Reorganizar la cuadrícula de 12 columnas para:
+## New component: `src/components/dashboard/Tracker.tsx`
 
-1. **Calculadora**: más corta (no row-span-2). Una sola altura, ~min-h-[340px].
-2. **To-Do + OrderCounter merged**: nueva columna grande que ocupa ~1/3 del ancho y se extiende verticalmente (row-span-2), uniendo la lista de tareas arriba y el contador de órdenes abajo dentro de la misma card-area.
-3. **FormViewer**: se mantiene grande (col-span-4, row-span-2).
-4. **GoalGauge** + **MoodChip**: se mantienen a la derecha apilados.
-5. **Notepad**: agrandar (col-span-5 o 6, min-h ~360px).
-6. **QuoteBucket**: achicar (col-span-3, min-h ~280px).
-7. **HistoryTable**: ocupa el ancho restante abajo.
-
-Nuevo esquema aproximado:
+Single card that replaces both `OrderCounter` and `FormViewer`. Layout:
 
 ```text
-Row1: [Calc 3] [TodoList 3 rs2] [FormViewer 4 rs2] [GoalGauge 2]
-Row2: [Notepad 3 (debajo de Calc)]               [MoodChip 2]
-Row3: [OrderCounter 3 (debajo Todo? o merge)] [QuoteBucket 3] [History 6]
+┌────────────────────────────────────────────────┐
+│ [#] Tracker         Hoy        [⚡] [⟳] [✏][🗑]│
+├────────────────────────────────────────────────┤
+│   [ – ]      0  PO#TOTAL       [ + ]           │
+│           ─────────────────                    │
+│      [–] 0 PO  [+]   [–] 0 OTROS [+]           │
+├────────────────────────────────────────────────┤
+│  URL input (only when empty / editing)         │
+│  ┌──────────────────────────────────────────┐  │
+│  │                                          │  │
+│  │     <iframe Google Form>                 │  │
+│  │                                          │  │
+│  └──────────────────────────────────────────┘  │
+│  Stage: viewform | submitting | new entry      │
+└────────────────────────────────────────────────┘
 ```
 
-Mejor opción: crear un wrapper "TodoList + OrderCounter" como una columna stack:
+- The big number (was "TOTAL") is renamed **PO#TOTAL** — same `count` value.
+- The PO / Otros sub-counters stay below in the same two-pill layout.
+- Below them: URL input + iframe + a small status line showing the detected stage.
+
+---
+
+## Auto-tracking logic (the core change)
+
+Cross-origin iframes block URL reading, but the iframe's `load` event still fires on every navigation. The Google Form lifecycle reliably produces these stages:
 
 ```text
-Row1: [Calc 3]      [Todo+Counter 3 rs2] [FormViewer 4 rs2] [Goal 2]
-Row2: [Notepad 5]   [(continúa)]         [(continúa)]       [Mood 2]
-Row3: [Notepad cont? no] [Quote 3] [History 6] ...
+viewform        →  load #1  (initial)
+formResponse    →  load #2  (user clicked Submit)
+formResponse    →  load #3  (user clicked "Submit another response" → back to viewform)
+                            (in practice: viewform reload counts as load #3)
 ```
 
-Layout final propuesto (12 cols):
+Heuristic implementation in `Tracker.tsx`:
 
-- Fila 1: Calc(3) | TodoCounter(3, row-span-2) | FormViewer(4, row-span-2) | Goal(2)
-- Fila 2: Notepad(3) | — | — | Mood(2)
-- Fila 3: Notepad cont... no. Mejor:
-  - Calc(3) h≈340
-  - Notepad(3) h≈340 debajo
-  - Columna media TodoCounter(3) h≈700 (todo arriba, contador abajo dentro de la misma card o dos cards stacked)
-  - FormViewer(4) h≈700
-  - Goal(2) + Mood(2) apilados a la derecha h≈340 c/u
-- Fila 3 (full): Quote(4) + History(8)
+1. Track `loadCount` via `iframe.onload`.
+2. Track `lastLoadAt` timestamp.
+3. Ignore the very first load (initial mount / reload button).
+4. On each subsequent load:
+   - If time since previous load is between **1.5s and 5min** AND the iframe was focused at some point in that window → treat as a **submission stage transition**.
+   - Maintain a small state machine: `idle → submitting → counted`.
+     - First qualifying load after `idle` ⇒ go to `submitting` (Submit was pressed).
+     - Next qualifying load while in `submitting` ⇒ this is the "new entry" reload ⇒ **auto-increment counter** and open the type prompt (PO / Otro), then go back to `idle`.
+5. Manual reload (clicking the ⟳ button) resets the state machine and is excluded from the count.
+6. Keep the existing **⚡ auto-detect toggle** as a master on/off. When OFF, only manual +/- works.
+7. Keep the existing PO/Otro confirm dialog from `Index.tsx` (triggered via `onSubmitDetected`).
 
-**Merge Todo + Counter**: crear nuevo componente `TodoCounterColumn.tsx` que envuelva ambos en una sola columna con dos cards (Todo arriba flex-1, Counter abajo compacto). Alternativa más simple: en `Index.tsx` usar un `<div className="flex flex-col gap-4 h-full">` con `<TodoList />` y `<OrderCounter />` dentro de un col-span-3 row-span-2.
+This avoids any cross-origin reads — only the `load` event count + timing is used.
 
-Voy por la alternativa simple (sin componente nuevo).
+---
 
-**Cambios tipográficos en cards**
+## Layout changes in `src/pages/Index.tsx`
 
-Bajar un nivel los títulos de cada card. Actualmente usan `text-sm font-semibold`. Cambiar a `text-xs font-semibold` en los headers de:
-- Calculator.tsx
-- Notepad.tsx
-- TodoList.tsx
-- QuoteBucket.tsx
-- FormViewer.tsx
-- OrderCounter.tsx
-- GoalGauge.tsx
-- HistoryTable.tsx
+Replace the current "Counter + FormViewer" stacked column with a single `<Tracker />` that occupies the full `col-span-4 row-span-2` slot.
 
-Y los subtítulos de `text-[10px]` → `text-[9px]` (mantener legibilidad pero un step menor).
+Remove imports of `OrderCounter` and `FormViewer` from `Index.tsx`. Pass through:
+- `count, setCount, poCount, setPoCount, otherCount, setOtherCount, onReset`
+- `onSubmitDetected` (still opens the existing AlertDialog for PO / Otro)
 
-**Quitar estado "empezando" del MoodChip / GoalGauge**
+`OrderCounter.tsx` and `FormViewer.tsx` files are deleted (logic moves into `Tracker.tsx`).
 
-Revisar `GoalGauge.tsx` para encontrar el estado inicial llamado "empezando" (3 estados: bajo, medio, meta). Eliminar el label/face de "empezando" — cuando count es 0 o muy bajo, no mostrar nada (o mostrar vacío) hasta que cruce el umbral del estado "bajo". Necesito leer el archivo para saber el wording exacto.
+---
 
-**Archivos a modificar**
+## Files
 
-1. `src/pages/Index.tsx` — reestructurar grid, mergear Todo+Counter en una columna.
-2. `src/components/dashboard/Calculator.tsx` — bajar título.
-3. `src/components/dashboard/Notepad.tsx` — bajar título.
-4. `src/components/dashboard/TodoList.tsx` — bajar título.
-5. `src/components/dashboard/QuoteBucket.tsx` — bajar título.
-6. `src/components/dashboard/FormViewer.tsx` — bajar título.
-7. `src/components/dashboard/OrderCounter.tsx` — bajar título.
-8. `src/components/dashboard/GoalGauge.tsx` — bajar título + remover estado "empezando".
-9. `src/components/dashboard/HistoryTable.tsx` — bajar título.
+**Create**
+- `src/components/dashboard/Tracker.tsx` — merged component with stage detection, big PO#TOTAL, PO/Otro pills, URL input, iframe.
 
-**Resultado visual esperado**
+**Edit**
+- `src/pages/Index.tsx` — swap the two stacked components for one `<Tracker />`.
 
-- Calculadora compacta (no domina la altura).
-- To-Do alto + contador de órdenes pegado abajo, juntos ocupando ~1/3 vertical.
-- Notepad notablemente más grande.
-- Quote Requests más pequeño.
-- Form viewer y goal/mood igual.
-- Tipografía un punto más fina y sin la cara/label inicial "empezando".
+**Delete**
+- `src/components/dashboard/OrderCounter.tsx`
+- `src/components/dashboard/FormViewer.tsx`
+
+---
+
+## Notes / limitations
+
+- Browser security forbids reading the iframe's URL across origins, so we cannot literally see `viewform` vs `formResponse`. The 2-load cycle within a focused window is the most reliable proxy and matches the exact stages you described.
+- ⚡ stays as the manual override; if a stage is missed (e.g. user abandons), the +/- buttons are always there.
