@@ -71,7 +71,34 @@ export const Notepad = () => {
   const [activeId, setActiveId] = useState(notes[0]?.id ?? "1");
 
   const [tnotes, setTnotes] = useLocalStorage<TNote[]>("ecp.tnotes.v2", []);
+  const [activePO, setActivePO] = useLocalStorage<string>("ecp.tnotes.activePO", "");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const poList = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const t of tnotes) {
+      const k = (t.po || "").trim();
+      if (!seen.has(k)) {
+        seen.add(k);
+        out.push(k);
+      }
+    }
+    return out;
+  }, [tnotes]);
+
+  useEffect(() => {
+    if (poList.length === 0) {
+      if (activePO !== "") setActivePO("");
+      return;
+    }
+    if (!poList.includes(activePO)) setActivePO(poList[0]);
+  }, [poList, activePO, setActivePO]);
+
+  const visibleTnotes = useMemo(
+    () => tnotes.filter((t) => (t.po || "").trim() === activePO),
+    [tnotes, activePO]
+  );
 
   const active = notes.find((n) => n.id === activeId) ?? notes[0];
 
