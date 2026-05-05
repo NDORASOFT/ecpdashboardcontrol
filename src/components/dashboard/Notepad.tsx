@@ -9,6 +9,7 @@ type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
 type TNote = {
   id: string;
+  po: string;
   mscItem: string;
   michaelRno: string;
   sw: string;
@@ -21,7 +22,7 @@ type TNote = {
 };
 type Mode = "notepad" | "tnotes";
 
-const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras">; label: string }[] = [
+const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras" | "po">; label: string }[] = [
   { key: "mscItem", label: "MSC ITEM" },
   { key: "michaelRno", label: "Michael RNO" },
   { key: "sw", label: "SW" },
@@ -32,8 +33,9 @@ const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras">; label: string }[] 
   { key: "returnableRestockableFee", label: "Returnable / Restockable Fee" },
 ];
 
-const emptyTNote = (): TNote => ({
+const emptyTNote = (po = ""): TNote => ({
   id: crypto.randomUUID(),
+  po,
   mscItem: "",
   michaelRno: "",
   sw: "",
@@ -47,6 +49,7 @@ const emptyTNote = (): TNote => ({
 
 const formatTNote = (t: TNote) => {
   const lines: string[] = [];
+  if (t.po) lines.push(`PO#: ${t.po}`);
   for (const f of BASE_FIELDS) {
     if (f.key === "mscItem") continue; // referencia, no se copia
     const val = (t[f.key] as string) ?? "";
