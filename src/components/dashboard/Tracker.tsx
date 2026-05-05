@@ -5,7 +5,7 @@ import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Pl
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-type Stage = "idle" | "submitting";
+type Stage = "viewform" | "thank-you";
 
 export const Tracker = ({
   count,
@@ -31,10 +31,11 @@ export const Tracker = ({
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
   const [editing, setEditing] = useState(false);
-  const [stage, setStage] = useState<Stage>("idle");
+  const [stage, setStage] = useState<Stage>("viewform");
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const loadCountRef = useRef(0);
   const lastLoadRef = useRef(0);
+  const lastCountedAtRef = useRef(0);
   const focusedSinceLoadRef = useRef(false);
 
   const toEmbed = (u: string) => {
@@ -65,7 +66,7 @@ export const Tracker = ({
     lastLoadRef.current = now;
 
     if (!autoDetect) return;
-    if (n === 1) return; // initial load
+    if (n === 1) return; // initial load (viewform)
     if (dt < 1500 || dt > 5 * 60 * 1000) {
       focusedSinceLoadRef.current = false;
       return;
@@ -73,26 +74,31 @@ export const Tracker = ({
     if (!focusedSinceLoadRef.current) return;
     focusedSinceLoadRef.current = false;
 
-    if (stage === "idle") {
-      // Submit clicked → formResponse loaded
-      setStage("submitting");
-    } else if (stage === "submitting") {
-      // "Submit another response" → new entry
-      setStage("idle");
-      onSubmitDetected?.();
+    // Cooldown: never count twice within 8s (avoids the "submit another response" reload)
+    if (now - lastCountedAtRef.current < 8000) {
+      setStage("viewform");
+      return;
     }
+
+    // First qualifying load after focus = thank-you page → count once
+    setStage("thank-you");
+    lastCountedAtRef.current = now;
+    onSubmitDetected?.();
+
+    // After a short delay, assume we're back on viewform for next cycle
+    setTimeout(() => setStage("viewform"), 4000);
   };
 
   const manualReload = () => {
     loadCountRef.current = 0;
     lastLoadRef.current = 0;
+    lastCountedAtRef.current = 0;
     focusedSinceLoadRef.current = false;
-    setStage("idle");
+    setStage("viewform");
     setKey((k) => k + 1);
   };
 
-  const stageLabel =
-    stage === "submitting" ? "submitting" : "viewform";
+  const stageLabel = stage;
 
   return (
     <Card className="surface-card p-4 flex flex-col h-full overflow-hidden">
@@ -244,7 +250,7 @@ export const Tracker = ({
 
       {url && (
         <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
-          <span className={`h-1.5 w-1.5 rounded-full ${stage === "submitting" ? "bg-amber-500 animate-pulse" : "bg-mint"}`} />
+          <span className={`h-1.5 w-1.5 rounded-full ${stage === "thank-you" ? "bg-amber-500 animate-pulse" : "bg-mint"}`} />
           <span>stage: {stageLabel}</span>
           <span className="ml-auto">loads: {loadCountRef.current}</span>
         </div>
