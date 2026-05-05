@@ -119,7 +119,21 @@ export const Notepad = () => {
   const update = (patch: Partial<Note>) =>
     setNotes(notes.map((n) => (n.id === activeId ? { ...n, ...patch } : n)));
 
-  const addTNote = () => setTnotes([emptyTNote(), ...tnotes]);
+  const addTNote = () => setTnotes([emptyTNote(activePO), ...tnotes]);
+
+  const addPO = () => {
+    const po = window.prompt("PO# para nuevo grupo:")?.trim().toUpperCase();
+    if (!po) return;
+    setActivePO(po);
+    if (!poList.includes(po)) {
+      setTnotes([emptyTNote(po), ...tnotes]);
+    }
+  };
+
+  const removePO = (po: string) => {
+    if (!window.confirm(`¿Eliminar PO "${po || "(sin PO)"}" y todas sus T-Notes?`)) return;
+    setTnotes(tnotes.filter((t) => (t.po || "").trim() !== po));
+  };
 
   const updateTNote = (id: string, patch: Partial<TNote>) =>
     setTnotes(tnotes.map((t) => (t.id === id ? { ...t, ...patch } : t)));
