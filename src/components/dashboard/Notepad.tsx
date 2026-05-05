@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check } from "lucide-react";
+import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Hash } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 
