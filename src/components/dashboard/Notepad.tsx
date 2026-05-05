@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check } from "lucide-react";
+import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Hash } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 
@@ -9,6 +9,7 @@ type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
 type TNote = {
   id: string;
+  po: string;
   mscItem: string;
   michaelRno: string;
   sw: string;
@@ -21,7 +22,7 @@ type TNote = {
 };
 type Mode = "notepad" | "tnotes";
 
-const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras">; label: string }[] = [
+const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras" | "po">; label: string }[] = [
   { key: "mscItem", label: "MSC ITEM" },
   { key: "michaelRno", label: "Michael RNO" },
   { key: "sw", label: "SW" },
@@ -32,8 +33,9 @@ const BASE_FIELDS: { key: keyof Omit<TNote, "id" | "extras">; label: string }[] 
   { key: "returnableRestockableFee", label: "Returnable / Restockable Fee" },
 ];
 
-const emptyTNote = (): TNote => ({
+const emptyTNote = (po = ""): TNote => ({
   id: crypto.randomUUID(),
+  po,
   mscItem: "",
   michaelRno: "",
   sw: "",
@@ -47,6 +49,7 @@ const emptyTNote = (): TNote => ({
 
 const formatTNote = (t: TNote) => {
   const lines: string[] = [];
+  if (t.po) lines.push(`PO#: ${t.po}`);
   for (const f of BASE_FIELDS) {
     if (f.key === "mscItem") continue; // referencia, no se copia
     const val = (t[f.key] as string) ?? "";
@@ -68,7 +71,34 @@ export const Notepad = () => {
   const [activeId, setActiveId] = useState(notes[0]?.id ?? "1");
 
   const [tnotes, setTnotes] = useLocalStorage<TNote[]>("ecp.tnotes.v2", []);
+  const [activePO, setActivePO] = useLocalStorage<string>("ecp.tnotes.activePO", "");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const poList = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const t of tnotes) {
+      const k = (t.po || "").trim();
+      if (!seen.has(k)) {
+        seen.add(k);
+        out.push(k);
+      }
+    }
+    return out;
+  }, [tnotes]);
+
+  useEffect(() => {
+    if (poList.length === 0) {
+      if (activePO !== "") setActivePO("");
+      return;
+    }
+    if (!poList.includes(activePO)) setActivePO(poList[0]);
+  }, [poList, activePO, setActivePO]);
+
+  const visibleTnotes = useMemo(
+    () => tnotes.filter((t) => (t.po || "").trim() === activePO),
+    [tnotes, activePO]
+  );
 
   const active = notes.find((n) => n.id === activeId) ?? notes[0];
 
@@ -89,7 +119,21 @@ export const Notepad = () => {
   const update = (patch: Partial<Note>) =>
     setNotes(notes.map((n) => (n.id === activeId ? { ...n, ...patch } : n)));
 
-  const addTNote = () => setTnotes([emptyTNote(), ...tnotes]);
+  const addTNote = () => setTnotes([emptyTNote(activePO), ...tnotes]);
+
+  const addPO = () => {
+    const po = window.prompt("PO# para nuevo grupo:")?.trim().toUpperCase();
+    if (!po) return;
+    setActivePO(po);
+    if (!poList.includes(po)) {
+      setTnotes([emptyTNote(po), ...tnotes]);
+    }
+  };
+
+  const removePO = (po: string) => {
+    if (!window.confirm(`¿Eliminar PO "${po || "(sin PO)"}" y todas sus T-Notes?`)) return;
+    setTnotes(tnotes.filter((t) => (t.po || "").trim() !== po));
+  };
 
   const updateTNote = (id: string, patch: Partial<TNote>) =>
     setTnotes(tnotes.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -207,7 +251,8 @@ export const Notepad = () => {
         <>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[9px] text-muted-foreground">
-              {tnotes.length} T-Note{tnotes.length === 1 ? "" : "s"}
+              {visibleTnotes.length}/{tnotes.length} T-Note{tnotes.length === 1 ? "" : "s"}
+              {activePO ? ` · PO ${activePO}` : ""}
             </span>
             <Button size="sm" variant="secondary" className="h-7 rounded-full text-xs" onClick={addTNote}>
               <Plus className="h-3.5 w-3.5" />
@@ -215,19 +260,75 @@ export const Notepad = () => {
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2.5 pr-1">
+          <div className="flex-1 min-h-0 flex gap-2">
+            {/* Vertical PO sidebar */}
+            <div className="w-20 shrink-0 flex flex-col gap-1 overflow-y-auto scrollbar-thin pr-1 border-r border-border/40">
+              {poList.map((po) => {
+                const count = tnotes.filter((t) => (t.po || "").trim() === po).length;
+                const isActive = po === activePO;
+                return (
+                  <div key={po || "__none__"} className="group relative">
+                    <button
+                      onClick={() => setActivePO(po)}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] font-mono transition-smooth flex items-center gap-1 ${
+                        isActive
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/50"
+                          : "bg-secondary/40 text-muted-foreground hover:bg-secondary border border-transparent"
+                      }`}
+                      title={po || "Sin PO"}
+                    >
+                      <Hash className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate flex-1">{po || "—"}</span>
+                      <span className="opacity-60">{count}</span>
+                    </button>
+                    {po && (
+                      <button
+                        onClick={() => removePO(po)}
+                        className="absolute -top-1 -right-1 hidden group-hover:grid place-items-center h-4 w-4 rounded-full bg-destructive text-destructive-foreground"
+                        aria-label="Eliminar PO"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={addPO}
+                className="h-7 rounded-lg text-[10px] justify-start px-2 text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-3 w-3" />
+                PO
+              </Button>
+            </div>
+
+            {/* T-Notes content */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2.5 pr-1">
             {tnotes.length === 0 && (
               <div className="text-center text-xs text-muted-foreground py-8">
                 No hay T-Notes todavía. Crea uno para empezar.
               </div>
             )}
 
-            {tnotes.map((t) => (
+            {visibleTnotes.map((t) => (
               <div key={t.id} className="bg-black border border-yellow-500/40 rounded-xl p-2.5 space-y-1.5">
                 <div className="flex items-center justify-between gap-2 pb-1 border-b border-yellow-500/30">
-                  <span className="text-[9px] uppercase tracking-wide text-yellow-500 font-mono font-semibold">
-                    T-NOTE · {(t.mscItem || "sin item").toString().slice(0, 14)}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <span className="text-[9px] uppercase tracking-wide text-yellow-500 font-mono font-semibold whitespace-nowrap">
+                      PO#
+                    </span>
+                    <input
+                      value={t.po}
+                      onChange={(e) => updateTNote(t.id, { po: e.target.value.toUpperCase() })}
+                      placeholder="—"
+                      className="flex-1 min-w-0 bg-transparent border-b border-yellow-500/30 px-1 py-0.5 text-[11px] text-yellow-300 font-mono outline-none focus:border-yellow-400"
+                    />
+                    <span className="text-[9px] text-yellow-600/70 font-mono">
+                      · {(t.mscItem || "sin item").toString().slice(0, 10)}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => copyTNote(t)}
@@ -300,6 +401,7 @@ export const Notepad = () => {
                 </Button>
               </div>
             ))}
+            </div>
           </div>
         </>
       )}
