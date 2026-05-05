@@ -401,6 +401,7 @@ export const Notepad = () => {
                 </Button>
               </div>
             ))}
+            </div>
           </div>
         </>
       )}
