@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Calculator } from "@/components/dashboard/Calculator";
 import { Notepad } from "@/components/dashboard/Notepad";
 import { SplitOrderCalc } from "@/components/dashboard/SplitOrderCalc";
-import { FormViewer } from "@/components/dashboard/FormViewer";
-import { OrderCounter } from "@/components/dashboard/OrderCounter";
+import { Tracker } from "@/components/dashboard/Tracker";
 import { GoalGauge } from "@/components/dashboard/GoalGauge";
 import { HistoryTable } from "@/components/dashboard/HistoryTable";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -90,21 +89,17 @@ const Index = () => {
         <div className="col-span-12 md:col-span-3 row-span-2 min-h-[700px]">
           <Notepad />
         </div>
-        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px] flex flex-col gap-4">
-          <div className="shrink-0">
-            <OrderCounter
-              count={count}
-              setCount={setCount}
-              poCount={poCount}
-              setPoCount={setPoCount}
-              otherCount={otherCount}
-              setOtherCount={setOtherCount}
-              onReset={resetAll}
-            />
-          </div>
-          <div className="flex-1 min-h-0">
-            <FormViewer onSubmitDetected={handleSubmitDetected} />
-          </div>
+        <div className="col-span-12 md:col-span-4 row-span-2 min-h-[700px]">
+          <Tracker
+            count={count}
+            setCount={setCount}
+            poCount={poCount}
+            setPoCount={setPoCount}
+            otherCount={otherCount}
+            setOtherCount={setOtherCount}
+            onReset={resetAll}
+            onSubmitDetected={handleSubmitDetected}
+          />
         </div>
         <div className="col-span-6 md:col-span-2 row-span-2 min-h-[700px] flex flex-col gap-4">
           <div className="shrink-0">
