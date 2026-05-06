@@ -81,6 +81,29 @@ const CartInput = ({
   const copyAmount = async () => {
     try {
       await navigator.clipboard.writeText(cart.total.toFixed(2));
+      // Try to attach to currently active PO from Notepad sidebar
+      try {
+        const raw = localStorage.getItem("ecp.tnotes.activePO");
+        const po = raw ? JSON.parse(raw) : "";
+        if (po && typeof po === "string") {
+          upsertOrder(po, {
+            amount: cart.total,
+            cart: {
+              label: (label.toLowerCase().includes("a")
+                ? "a"
+                : label.toLowerCase().includes("b")
+                ? "b"
+                : "main") as "a" | "b" | "main",
+              subtotal: cart.subtotal,
+              tax: cart.tax,
+              freight: cart.freight,
+              total: cart.total,
+            },
+          });
+        }
+      } catch {
+        /* noop */
+      }
       toast({ title: "Copiado", description: `Order amount: $${cart.total.toFixed(2)}` });
     } catch {
       toast({ title: "Error al copiar", variant: "destructive" });
