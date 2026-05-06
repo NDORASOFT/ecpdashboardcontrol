@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Hash } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
+import { upsertOrder } from "@/lib/orders";
 
 type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
@@ -167,6 +168,9 @@ export const Notepad = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(t.id);
+      if (t.po?.trim()) {
+        upsertOrder(t.po, { notes: text });
+      }
       toast({ title: "Copiado", description: "T-Note listo para pegar en AS400" });
       setTimeout(() => setCopiedId((c) => (c === t.id ? null : c)), 1500);
     } catch {
