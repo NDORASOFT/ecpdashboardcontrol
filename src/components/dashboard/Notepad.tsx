@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, X, NotebookPen, FileText, StickyNote, Trash2, Copy, Check, Hash } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
+import { upsertOrder } from "@/lib/orders";
 
 type Note = { id: string; title: string; body: string };
 type ExtraField = { id: string; label: string; value: string };
