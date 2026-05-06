@@ -109,51 +109,83 @@ export const Tracker = ({
         <div className="h-8 w-8 rounded-xl bg-mint text-primary-foreground grid place-items-center">
           <Hash className="h-4 w-4" />
         </div>
-        <div>
+        <div className="min-w-0">
           <h3 className="font-display text-xs font-semibold leading-tight">Tracker</h3>
-          <p className="text-[9px] text-muted-foreground">Auto-cuenta cada submit · Hoy</p>
+          <p className="text-[9px] text-muted-foreground truncate">
+            {view === "form" ? "Auto-cuenta cada submit · Hoy" : "Sub-dashboard de PO's"}
+          </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`ml-auto h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
-          onClick={() => setAutoDetect(!autoDetect)}
-          title={autoDetect ? "Auto-detect ON" : "Auto-detect OFF"}
-        >
-          {autoDetect ? <Zap className="h-3.5 w-3.5" /> : <ZapOff className="h-3.5 w-3.5" />}
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={manualReload} aria-label="Recargar">
-          <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onReset} aria-label="Reset contador">
-          <RotateCcw className="h-3.5 w-3.5" />
-        </Button>
-        {url && (
+        <div className="ml-auto flex items-center gap-1 bg-secondary rounded-full p-0.5">
+          <button
+            onClick={() => setView("form")}
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-smooth ${
+              view === "form" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label="Vista Form"
+          >
+            <FileText className="h-3 w-3" />
+            Form
+          </button>
+          <button
+            onClick={() => setView("orders")}
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-smooth ${
+              view === "orders" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label="Vista Orders"
+          >
+            <ListOrdered className="h-3 w-3" />
+            Orders
+          </button>
+        </div>
+        {view === "form" && (
           <>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
-              onClick={() => { setDraft(url); setEditing((v) => !v); }}
+              className={`h-7 w-7 ${autoDetect ? "text-mint" : "text-muted-foreground"}`}
+              onClick={() => setAutoDetect(!autoDetect)}
+              title={autoDetect ? "Auto-detect ON" : "Auto-detect OFF"}
             >
-              <Pencil className="h-3.5 w-3.5" />
+              {autoDetect ? <Zap className="h-3.5 w-3.5" /> : <ZapOff className="h-3.5 w-3.5" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={() => { setUrl(""); setDraft(""); setEditing(false); }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={manualReload} aria-label="Recargar">
+              <RefreshCw className="h-3.5 w-3.5" />
             </Button>
-            <a href={url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onReset} aria-label="Reset contador">
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
+            {url && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => { setDraft(url); setEditing((v) => !v); }}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={() => { setUrl(""); setDraft(""); setEditing(false); }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+                <a href={url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </>
+            )}
           </>
         )}
       </div>
 
-      {/* Counter section */}
+      {view === "orders" ? (
+        <OrdersView />
+      ) : (
+        <>
+
       <div className="flex items-center justify-between gap-3 mb-2">
         <Button
           size="icon"
