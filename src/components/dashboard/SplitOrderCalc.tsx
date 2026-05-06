@@ -12,6 +12,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { upsertOrder } from "@/lib/orders";
 
 type Cart = {
   subtotal: number;
