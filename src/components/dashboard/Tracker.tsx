@@ -1,9 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Plus, Minus, RotateCcw, Hash } from "lucide-react";
+import { ClipboardList, ExternalLink, RefreshCw, Pencil, Trash2, Zap, ZapOff, Plus, Minus, RotateCcw, Hash, ListOrdered, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { OrdersView } from "./OrdersView";
 
 type Stage = "viewform" | "thank-you";
 
