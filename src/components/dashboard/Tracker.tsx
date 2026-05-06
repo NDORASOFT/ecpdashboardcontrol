@@ -29,6 +29,7 @@ export const Tracker = ({
 }) => {
   const [url, setUrl] = useLocalStorage<string>("ecp.formUrl", "");
   const [autoDetect, setAutoDetect] = useLocalStorage<boolean>("ecp.formAutoDetect", true);
+  const [view, setView] = useLocalStorage<"form" | "orders">("ecp.tracker.view", "form");
   const [draft, setDraft] = useState(url);
   const [key, setKey] = useState(0);
   const [editing, setEditing] = useState(false);
