@@ -168,6 +168,9 @@ export const Notepad = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(t.id);
+      if (t.po?.trim()) {
+        upsertOrder(t.po, { notes: text });
+      }
       toast({ title: "Copiado", description: "T-Note listo para pegar en AS400" });
       setTimeout(() => setCopiedId((c) => (c === t.id ? null : c)), 1500);
     } catch {
