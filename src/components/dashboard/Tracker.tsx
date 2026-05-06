@@ -289,6 +289,8 @@ export const Tracker = ({
           <span className="ml-auto">loads: {loadCountRef.current}</span>
         </div>
       )}
+        </>
+      )}
     </Card>
   );
 };
